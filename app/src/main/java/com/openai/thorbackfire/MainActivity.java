@@ -20,8 +20,11 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class MainActivity extends Activity {
-    private static final UUID SERVICE = UUID.fromString("0000ffe0-0000-1000-8000-00805f9b34fb");
-    private static final UUID CHAR = UUID.fromString("0000ffe1-0000-1000-8000-00805f9b34fb");
+    private static final UUID SERVICE_NORDIC = UUID.fromString("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
+    private static final UUID CHAR_WRITE_NORDIC = UUID.fromString("6e400002-b5a3-f393-e0a9-e50e24dcca9e");
+    private static final UUID CHAR_NOTIFY_NORDIC = UUID.fromString("6e400003-b5a3-f393-e0a9-e50e24dcca9e");
+    private static final UUID SERVICE_STANDARD = UUID.fromString("0000ffe0-0000-1000-8000-00805f9b34fb");
+    private static final UUID CHAR_STANDARD = UUID.fromString("0000ffe1-0000-1000-8000-00805f9b34fb");
     private static final UUID CCCD = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
     private static final int PKG=0x001f, VER=0x0005, MODE=0x0003, RULE=0x0021;
     private static final int REQ=1001;
@@ -84,7 +87,7 @@ public class MainActivity extends Activity {
     }
     final ScanCallback scanCb=new ScanCallback(){ @SuppressWarnings("MissingPermission") @Override public void onScanResult(int t,ScanResult r){
         ScanRecord sr=r.getScanRecord(); boolean match=false;
-        if(sr!=null && sr.getServiceUuids()!=null) for(android.os.ParcelUuid u:sr.getServiceUuids()) if(SERVICE.equals(u.getUuid())) match=true;
+        if(sr!=null && sr.getServiceUuids()!=null) for(android.os.ParcelUuid u:sr.getServiceUuids()) if(SERVICE_NORDIC.equals(u.getUuid()) || SERVICE_STANDARD.equals(u.getUuid())) match=true;
         String n=r.getDevice().getName(); if(n!=null && n.toLowerCase(Locale.ROOT).contains("thor")) match=true;
         if(match){ try{scanner.stopScan(this);}catch(Exception ignored){} uiStatus("Conectando a "+(n==null?"THOR":n)+"…"); log("Dispositivo encontrado: "+n+" "+r.getDevice().getAddress()); gatt=r.getDevice().connectGatt(MainActivity.this,false,gattCb,BluetoothDevice.TRANSPORT_LE); }
     }};
@@ -92,13 +95,23 @@ public class MainActivity extends Activity {
     final BluetoothGattCallback gattCb=new BluetoothGattCallback(){
         @Override public void onConnectionStateChange(BluetoothGatt g,int st,int ns){ if(ns==BluetoothProfile.STATE_CONNECTED){log("GATT conectado"); uiStatus("Descubriendo servicio…"); g.discoverServices();} else {log("GATT desconectado status="+st); uiStatus("Desconectado"); enable(false);} }
         @Override public void onServicesDiscovered(BluetoothGatt g,int st){
-            BluetoothGattService s=g.getService(SERVICE); if(s==null){uiStatus("Servicio FFE0 no encontrado");return;}
-            for(BluetoothGattCharacteristic c:s.getCharacteristics()) if(CHAR.equals(c.getUuid())){
-                int p=c.getProperties(); if((p&(BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE|BluetoothGattCharacteristic.PROPERTY_WRITE))!=0 && writeChar==null)writeChar=c;
-                if((p&(BluetoothGattCharacteristic.PROPERTY_NOTIFY|BluetoothGattCharacteristic.PROPERTY_INDICATE))!=0 && notifyChar==null)notifyChar=c;
+            BluetoothGattService s=g.getService(SERVICE_NORDIC);
+            boolean nordic=s!=null;
+            if(!nordic) s=g.getService(SERVICE_STANDARD);
+            if(s==null){uiStatus("Servicio THOR BLE no encontrado");return;}
+            writeChar=null; notifyChar=null;
+            for(BluetoothGattCharacteristic c:s.getCharacteristics()){
+                UUID u=c.getUuid(); int p=c.getProperties();
+                if(nordic){
+                    if(CHAR_WRITE_NORDIC.equals(u)) writeChar=c;
+                    if(CHAR_NOTIFY_NORDIC.equals(u)) notifyChar=c;
+                } else if(CHAR_STANDARD.equals(u)){
+                    if((p&(BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE|BluetoothGattCharacteristic.PROPERTY_WRITE))!=0 && writeChar==null)writeChar=c;
+                    if((p&(BluetoothGattCharacteristic.PROPERTY_NOTIFY|BluetoothGattCharacteristic.PROPERTY_INDICATE))!=0 && notifyChar==null)notifyChar=c;
+                }
             }
-            if(writeChar==null||notifyChar==null){uiStatus("FFE1 encontrado pero propiedades incompatibles"); log("write="+writeChar+" notify="+notifyChar);return;}
-            log("Características listas. write handle lógico FFE1 / notify FFE1");
+            if(writeChar==null||notifyChar==null){uiStatus("Características THOR incompatibles"); log("write="+writeChar+" notify="+notifyChar);return;}
+            log("Características listas: "+(nordic?"Nordic UART":"FFE0/FFE1"));
             g.setCharacteristicNotification(notifyChar,true); BluetoothGattDescriptor d=notifyChar.getDescriptor(CCCD);
             if(d==null){uiStatus("CCCD no encontrado");return;} d.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE); g.writeDescriptor(d);
         }
@@ -145,7 +158,7 @@ public class MainActivity extends Activity {
     static byte[] cat(byte[]... aa){int n=0;for(byte[] a:aa)n+=a.length;byte[] o=new byte[n];int p=0;for(byte[] a:aa){System.arraycopy(a,0,o,p,a.length);p+=a.length;}return o;}
     static int crc16(byte[] a){int c=0xffff;for(byte bb:a){c^=bb&255;for(int i=0;i<8;i++)c=((c&1)!=0)?((c>>>1)^0xa001):(c>>>1);}return c&0xffff;}
     static byte[] frame(int type,byte[] p){int sw=((type&7)<<13)|(p.length&0x1fff);byte[] pre=cat(new byte[]{(byte)0xa5,0x5a,(byte)(sw>>>8),(byte)sw},p);int c=crc16(pre);return cat(pre,new byte[]{(byte)c,(byte)(c>>>8)});} static void incCounter(byte[] c,int blocks){long x=blocks;for(int i=15;i>=0&&x>0;i--){long s=(c[i]&255L)+(x&255L);c[i]=(byte)s;x=(x>>>8)+(s>>>8);}}
-    static int parseRule(byte[] msg,int rule){ if(msg==null||msg.length<6)return -1;for(int i=6;i+3<msg.length;i+=4){int r=u16at(msg,i),v=u16at(msg,i+2);if(r==rule)return v;}return -1;}
+    static int parseRule(byte[] msg,int rule){ if(msg==null||msg.length<8)return -1;int count=u16at(msg,6),off=8;for(int n=0;n<count&&off+3<msg.length;n++,off+=4){int r=u16at(msg,off),v=u16at(msg,off+2);if(r==rule)return v;}return -1;}
 
     @SuppressWarnings("MissingPermission") void disconnectNow(){ try{ if(scanner!=null)scanner.stopScan(scanCb);}catch(Exception ignored){} if(gatt!=null){gatt.disconnect();gatt.close();gatt=null;} writeChar=notifyChar=null;key=ctr=null;step="idle";enable(false);uiStatus("Desconectado"); }
     void fail(Exception e){ log("ERROR: "+e.getMessage()); uiStatus("Error: "+e.getMessage()); }
