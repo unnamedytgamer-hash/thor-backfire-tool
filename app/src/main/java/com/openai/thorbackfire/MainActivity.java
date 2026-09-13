@@ -130,7 +130,8 @@ public class MainActivity extends Activity {
             switch(step){
                 case "hardware": if(payload.length<8||payload[0]!=0||payload[1]!=1){fail(new Exception("Respuesta hardware inesperada"));return;} int sn=u16at(payload,2),fw=u16at(payload,4),hw=u16at(payload,6); key=deriveKey(hw,fw,sn); byte[] ivh=new byte[8];new SecureRandom().nextBytes(ivh); tempIvHost=ivh; log("HW serial="+sn+" fw=0x"+hx(fw)+" hw=0x"+hx(hw)); step="iv";waitFor(2,-1);sendRaw(2,ivh);break;
                 case "iv": if(payload.length!=8){fail(new Exception("IV del dispositivo inválido"));return;} ctr=cat(tempIvHost,payload); log("Handshake OK"); warmIndex=0;step="warm";sendWarm();break;
-                case "warm": warmIndex++; if(warmIndex<5)sendWarm(); else {enable(true);uiStatus("Conectado. Leyendo valor…");sendRead();} break;
+                case "warm": warmIndex++; if(warmIndex<5)sendWarm(); else {enable(true);uiStatus("Conectado. Activando preset…");step="activate";waitFor(1,0x0045);sendEncrypted(logical(0x0045,u16(4)));} break;
+                case "activate": uiStatus("Conectado. Leyendo valor…");sendRead();break;
                 case "read": int v=parseRule(msg,RULE); runOnUiThread(()->current.setText("Valor actual: "+(v<0?"no encontrado":v))); log("Regla 0x0021 = "+v); if(pendingSetValue>=0){ if(v==pendingSetValue)uiStatus("Confirmado por THOR: valor "+v); else uiStatus("Lectura posterior: "+v+" (se pidió "+pendingSetValue+")"); pendingSetValue=-1;} else uiStatus("Conectado"); step="idle"; break;
                 case "set": log("Escritura aceptada; verificando…"); step="read"; sendReadInternal(); break;
             }
@@ -158,7 +159,7 @@ public class MainActivity extends Activity {
     static byte[] cat(byte[]... aa){int n=0;for(byte[] a:aa)n+=a.length;byte[] o=new byte[n];int p=0;for(byte[] a:aa){System.arraycopy(a,0,o,p,a.length);p+=a.length;}return o;}
     static int crc16(byte[] a){int c=0xffff;for(byte bb:a){c^=bb&255;for(int i=0;i<8;i++)c=((c&1)!=0)?((c>>>1)^0xa001):(c>>>1);}return c&0xffff;}
     static byte[] frame(int type,byte[] p){int sw=((type&7)<<13)|(p.length&0x1fff);byte[] pre=cat(new byte[]{(byte)0xa5,0x5a,(byte)(sw>>>8),(byte)sw},p);int c=crc16(pre);return cat(pre,new byte[]{(byte)c,(byte)(c>>>8)});} static void incCounter(byte[] c,int blocks){long x=blocks;for(int i=15;i>=0&&x>0;i--){long s=(c[i]&255L)+(x&255L);c[i]=(byte)s;x=(x>>>8)+(s>>>8);}}
-    static int parseRule(byte[] msg,int rule){ if(msg==null)return -1;int base=(msg.length>=2&&(u16at(msg,0)&0x8000)!=0)?2:0;if(msg.length<base+8)return -1;int count=u16at(msg,base+6),off=base+8;for(int n=0;n<count&&off+3<msg.length;n++,off+=4){int r=u16at(msg,off),v=u16at(msg,off+2);if(r==rule)return v;}return -1;}
+    static int parseRule(byte[] msg,int rule){ if(msg==null||msg.length<8)return -1;int count=u16at(msg,6),off=8;for(int n=0;n<count&&off+3<msg.length;n++,off+=4){int r=u16at(msg,off),v=u16at(msg,off+2);if(r==rule)return v;}return -1;}
 
     @SuppressWarnings("MissingPermission") void disconnectNow(){ try{ if(scanner!=null)scanner.stopScan(scanCb);}catch(Exception ignored){} if(gatt!=null){gatt.disconnect();gatt.close();gatt=null;} writeChar=notifyChar=null;key=ctr=null;step="idle";enable(false);uiStatus("Desconectado"); }
     void fail(Exception e){ log("ERROR: "+e.getMessage()); uiStatus("Error: "+e.getMessage()); }
