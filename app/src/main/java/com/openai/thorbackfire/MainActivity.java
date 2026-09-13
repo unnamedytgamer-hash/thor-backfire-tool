@@ -121,7 +121,7 @@ public class MainActivity extends Activity {
 
     void onRx(byte[] a){ rxBuf=cat(rxBuf,a); while(rxBuf.length>=6){ int i=0;while(i+1<rxBuf.length&&(rxBuf[i]!=(byte)0xa5||rxBuf[i+1]!=0x5a))i++; if(i>0)rxBuf=Arrays.copyOfRange(rxBuf,i,rxBuf.length); if(rxBuf.length<6)return; int sw=((rxBuf[2]&255)<<8)|(rxBuf[3]&255), n=sw&0x1fff, total=4+n+2; if(rxBuf.length<total)return; byte[] f=Arrays.copyOfRange(rxBuf,0,total);rxBuf=Arrays.copyOfRange(rxBuf,total,rxBuf.length); parseFrame(f); } }
     void parseFrame(byte[] f){ try{ int sw=((f[2]&255)<<8)|(f[3]&255),type=sw>>>13,n=sw&0x1fff; byte[] p=Arrays.copyOfRange(f,4,4+n);int got=(f[4+n]&255)|((f[5+n]&255)<<8),calc=crc16(Arrays.copyOfRange(f,0,4+n)); if(got!=calc){log("CRC RX incorrecto");return;}
-        if(type==1){ byte[] pt=crypt(p); int pad=pt[0]&255; if(pad<1||pad>=pt.length){log("Padding cifrado inválido");return;} byte[] msg=Arrays.copyOfRange(pt,1,pt.length-pad); int cmd=msg.length>=2?u16at(msg,0):-1; log("RX cifrado cmd=0x"+hx(cmd)); handleResponse(type,cmd,msg,p); }
+        if(type==1){ byte[] pt=crypt(p); int pad=pt[0]&255; if(pad<1||pad>=pt.length){log("Padding cifrado inválido");return;} byte[] msg=Arrays.copyOfRange(pt,1,pt.length-pad); int cmd=msg.length>=2?u16at(msg,0):-1; log("RX cifrado cmd=0x"+hx(cmd)+" msg="+hex(msg)); handleResponse(type,cmd,msg,p); }
         else { log("RX type="+type+" "+hex(p)); handleResponse(type,-1,null,p); }
     }catch(Exception e){fail(e);} }
     void waitFor(int type,int cmd){pendingType=type;pendingCmd=cmd;}
@@ -158,7 +158,7 @@ public class MainActivity extends Activity {
     static byte[] cat(byte[]... aa){int n=0;for(byte[] a:aa)n+=a.length;byte[] o=new byte[n];int p=0;for(byte[] a:aa){System.arraycopy(a,0,o,p,a.length);p+=a.length;}return o;}
     static int crc16(byte[] a){int c=0xffff;for(byte bb:a){c^=bb&255;for(int i=0;i<8;i++)c=((c&1)!=0)?((c>>>1)^0xa001):(c>>>1);}return c&0xffff;}
     static byte[] frame(int type,byte[] p){int sw=((type&7)<<13)|(p.length&0x1fff);byte[] pre=cat(new byte[]{(byte)0xa5,0x5a,(byte)(sw>>>8),(byte)sw},p);int c=crc16(pre);return cat(pre,new byte[]{(byte)c,(byte)(c>>>8)});} static void incCounter(byte[] c,int blocks){long x=blocks;for(int i=15;i>=0&&x>0;i--){long s=(c[i]&255L)+(x&255L);c[i]=(byte)s;x=(x>>>8)+(s>>>8);}}
-    static int parseRule(byte[] msg,int rule){ if(msg==null||msg.length<8)return -1;int count=u16at(msg,6),off=8;for(int n=0;n<count&&off+3<msg.length;n++,off+=4){int r=u16at(msg,off),v=u16at(msg,off+2);if(r==rule)return v;}return -1;}
+    static int parseRule(byte[] msg,int rule){ if(msg==null)return -1;int base=(msg.length>=2&&(u16at(msg,0)&0x8000)!=0)?2:0;if(msg.length<base+8)return -1;int count=u16at(msg,base+6),off=base+8;for(int n=0;n<count&&off+3<msg.length;n++,off+=4){int r=u16at(msg,off),v=u16at(msg,off+2);if(r==rule)return v;}return -1;}
 
     @SuppressWarnings("MissingPermission") void disconnectNow(){ try{ if(scanner!=null)scanner.stopScan(scanCb);}catch(Exception ignored){} if(gatt!=null){gatt.disconnect();gatt.close();gatt=null;} writeChar=notifyChar=null;key=ctr=null;step="idle";enable(false);uiStatus("Desconectado"); }
     void fail(Exception e){ log("ERROR: "+e.getMessage()); uiStatus("Error: "+e.getMessage()); }
