@@ -125,7 +125,7 @@ public class MainActivity extends Activity {
         else { log("RX type="+type+" "+hex(p)); handleResponse(type,-1,null,p); }
     }catch(Exception e){fail(e);} }
     void waitFor(int type,int cmd){pendingType=type;pendingCmd=cmd;}
-    void handleResponse(int type,int cmd,byte[] msg,byte[] payload){ if(type!=pendingType)return; if(type==1&&cmd!=pendingCmd)return; pendingType=-1;pendingCmd=-1;
+    void handleResponse(int type,int cmd,byte[] msg,byte[] payload){ if(type!=pendingType)return; if(type==1&&cmd!=pendingCmd&&((cmd&0x7fff)!=pendingCmd))return; pendingType=-1;pendingCmd=-1;
         try{
             switch(step){
                 case "hardware": if(payload.length<8||payload[0]!=0||payload[1]!=1){fail(new Exception("Respuesta hardware inesperada"));return;} int sn=u16at(payload,2),fw=u16at(payload,4),hw=u16at(payload,6); key=deriveKey(hw,fw,sn); byte[] ivh=new byte[8];new SecureRandom().nextBytes(ivh); tempIvHost=ivh; log("HW serial="+sn+" fw=0x"+hx(fw)+" hw=0x"+hx(hw)); step="iv";waitFor(2,-1);sendRaw(2,ivh);break;
