@@ -30,33 +30,47 @@ public class MainActivity extends Activity {
     private static final int REQ=1001;
 
     TextView status,current,logView;
-    Button connect,disconnect,read,set3,set7;
+    Button connect,disconnect,read,set3,set4,set5,set7;
     BluetoothAdapter adapter; BluetoothLeScanner scanner; BluetoothGatt gatt;
     BluetoothGattCharacteristic writeChar, notifyChar;
     byte[] rxBuf=new byte[0], key, ctr;
     int pendingType=-1, pendingCmd=-1;
     String step="idle";
-    int warmIndex=0, pendingSetValue=-1;
+    int warmIndex=0, pendingSetValue=-1, pendingSetError=-1;
+    boolean pendingSetRejected=false;
     final Handler h=new Handler(Looper.getMainLooper());
 
     @Override public void onCreate(Bundle b){ super.onCreate(b); buildUi();
         BluetoothManager bm=(BluetoothManager)getSystemService(BLUETOOTH_SERVICE); adapter=bm.getAdapter();
         connect.setOnClickListener(v->ensurePermsAndScan()); disconnect.setOnClickListener(v->disconnectNow());
         read.setOnClickListener(v->{ if(gatt!=null) sendRead(); });
-        set3.setOnClickListener(v->sendSet(3)); set7.setOnClickListener(v->sendSet(7));
+        set3.setOnClickListener(v->sendSet(3));
+        set4.setOnClickListener(v->sendSet(4));
+        set5.setOnClickListener(v->sendSet(5));
+        set7.setOnClickListener(v->sendSet(7));
     }
 
     void buildUi(){
         LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setPadding(28,28,28,28);
-        TextView title=new TextView(this); title.setText("THOR Backfire Tool"); title.setTextSize(28); root.addView(title);
+        TextView title=new TextView(this); title.setText("THOR Backfire Tool v6"); title.setTextSize(28); root.addView(title);
         TextView sub=new TextView(this); sub.setText("Herramienta experimental para leer/escribir la regla de pops del THOR. Mantén cerrada la app THOR oficial mientras esté conectada."); sub.setTextSize(16); root.addView(sub);
         status=new TextView(this); status.setText("Sin conectar"); status.setTextSize(18); status.setPadding(0,24,0,8); root.addView(status);
         connect=btn("Conectar al THOR"); root.addView(connect); disconnect=btn("Desconectar"); disconnect.setEnabled(false); root.addView(disconnect);
         TextView preset=new TextView(this); preset.setText("\nPreset: packageId=0x001F · versionId=0x0005 · modeTypeId=0x0003 · regla=0x0021"); preset.setTextSize(15); root.addView(preset);
         current=new TextView(this); current.setText("Valor actual: —"); current.setTextSize(20); current.setPadding(0,16,0,8); root.addView(current);
-        LinearLayout row=new LinearLayout(this); row.setOrientation(LinearLayout.HORIZONTAL);
-        set3=btn("Aplicar 3"); set7=btn("Aplicar 7"); set3.setEnabled(false); set7.setEnabled(false);
-        row.addView(set3,new LinearLayout.LayoutParams(0,-2,1)); row.addView(set7,new LinearLayout.LayoutParams(0,-2,1)); root.addView(row);
+        LinearLayout row1=new LinearLayout(this); row1.setOrientation(LinearLayout.HORIZONTAL);
+        set3=btn("Aplicar 3"); set4=btn("Aplicar 4");
+        set3.setEnabled(false); set4.setEnabled(false);
+        row1.addView(set3,new LinearLayout.LayoutParams(0,-2,1));
+        row1.addView(set4,new LinearLayout.LayoutParams(0,-2,1));
+        root.addView(row1);
+
+        LinearLayout row2=new LinearLayout(this); row2.setOrientation(LinearLayout.HORIZONTAL);
+        set5=btn("Aplicar 5"); set7=btn("Aplicar 7");
+        set5.setEnabled(false); set7.setEnabled(false);
+        row2.addView(set5,new LinearLayout.LayoutParams(0,-2,1));
+        row2.addView(set7,new LinearLayout.LayoutParams(0,-2,1));
+        root.addView(row2);
         read=btn("Leer valor actual"); read.setEnabled(false); root.addView(read);
         TextView lh=new TextView(this); lh.setText("\nRegistro"); lh.setTextSize(18); root.addView(lh);
         logView=new TextView(this); logView.setTextSize(12); logView.setMovementMethod(new ScrollingMovementMethod());
@@ -66,7 +80,7 @@ public class MainActivity extends Activity {
     Button btn(String s){ Button b=new Button(this); b.setText(s); return b; }
     void uiStatus(String s){ runOnUiThread(()->status.setText(s)); }
     void log(String s){ runOnUiThread(()->{ logView.append("["+new java.text.SimpleDateFormat("HH:mm:ss",Locale.getDefault()).format(new Date())+"] "+s+"\n"); }); }
-    void enable(boolean on){ runOnUiThread(()->{connect.setEnabled(!on);disconnect.setEnabled(on);read.setEnabled(on);set3.setEnabled(on);set7.setEnabled(on);}); }
+    void enable(boolean on){ runOnUiThread(()->{connect.setEnabled(!on);disconnect.setEnabled(on);read.setEnabled(on);set3.setEnabled(on);set4.setEnabled(on);set5.setEnabled(on);set7.setEnabled(on);}); }
 
     void ensurePermsAndScan(){
         if(Build.VERSION.SDK_INT>=31){
@@ -132,8 +146,45 @@ public class MainActivity extends Activity {
                 case "iv": if(payload.length!=8){fail(new Exception("IV del dispositivo inválido"));return;} ctr=cat(tempIvHost,payload); log("Handshake OK"); warmIndex=0;step="warm";sendWarm();break;
                 case "warm": warmIndex++; if(warmIndex<5)sendWarm(); else {enable(true);uiStatus("Conectado. Activando preset…");step="activate";waitFor(1,0x0045);sendEncrypted(logical(0x0045,u16(4)));} break;
                 case "activate": uiStatus("Conectado. Leyendo valor…");sendRead();break;
-                case "read": int v=parseRule(msg,RULE); runOnUiThread(()->current.setText("Valor actual: "+(v<0?"no encontrado":v))); log("Regla 0x0021 = "+v); if(pendingSetValue>=0){ if(v==pendingSetValue)uiStatus("Confirmado por THOR: valor "+v); else uiStatus("Lectura posterior: "+v+" (se pidió "+pendingSetValue+")"); pendingSetValue=-1;} else uiStatus("Conectado"); step="idle"; break;
-                case "set": log("Escritura aceptada; verificando…"); step="read"; sendReadInternal(); break;
+                case "read": {
+                    int v=parseRule(msg,RULE);
+                    runOnUiThread(()->current.setText("Valor actual: "+(v<0?"no encontrado":v)));
+                    log("Regla 0x0021 = "+v);
+
+                    if(pendingSetValue>=0){
+                        if(pendingSetRejected){
+                            String code=pendingSetError>=0 ? " · código 0x"+hx(pendingSetError) : "";
+                            uiStatus("RECHAZADO por THOR: "+pendingSetValue+code+" · valor actual "+v);
+                        } else if(v==pendingSetValue){
+                            uiStatus("ACEPTADO por THOR: valor "+v);
+                        } else {
+                            uiStatus("THOR respondió OK, pero quedó en "+v+" (se pidió "+pendingSetValue+")");
+                        }
+                        pendingSetValue=-1;
+                        pendingSetRejected=false;
+                        pendingSetError=-1;
+                    } else {
+                        uiStatus("Conectado");
+                    }
+                    step="idle";
+                    break;
+                }
+                case "set":
+                    if((cmd & 0x8000)!=0){
+                        pendingSetRejected=true;
+                        pendingSetError=(msg!=null && msg.length>=4) ? u16at(msg,2) : -1;
+                        String code=pendingSetError>=0 ? "0x"+hx(pendingSetError) : "desconocido";
+                        log("Escritura RECHAZADA por THOR. Código="+code);
+                        uiStatus("RECHAZADO por THOR ("+code+"). Verificando valor…");
+                    } else {
+                        pendingSetRejected=false;
+                        pendingSetError=-1;
+                        log("Escritura ACEPTADA por THOR; verificando…");
+                        uiStatus("ACEPTADO por THOR. Verificando valor…");
+                    }
+                    step="read";
+                    sendReadInternal();
+                    break;
             }
         }catch(Exception e){fail(e);}
     }
@@ -147,7 +198,7 @@ public class MainActivity extends Activity {
     } waitFor(1,cmd); sendEncrypted(msg); }
     void sendRead(){ if(ctr==null)return; step="read";pendingSetValue=-1; try{sendReadInternal();}catch(Exception e){fail(e);} }
     void sendReadInternal() throws Exception { int cmd=0x0034;waitFor(1,cmd);sendEncrypted(logical(cmd,cat(u16(PKG),u16(MODE)))); }
-    void sendSet(int v){ if(ctr==null)return; try{ int cmd=0x0043;byte[] body=cat(u16(PKG),u16(VER),u16(MODE),u16(1),u16(RULE),u16(v)); pendingSetValue=v;step="set";waitFor(1,cmd);uiStatus("Enviando valor "+v+"…");sendEncrypted(logical(cmd,body)); }catch(Exception e){fail(e);} }
+    void sendSet(int v){ if(ctr==null)return; try{ int cmd=0x0043;byte[] body=cat(u16(PKG),u16(VER),u16(MODE),u16(1),u16(RULE),u16(v)); pendingSetValue=v;pendingSetRejected=false;pendingSetError=-1;step="set";waitFor(1,cmd);uiStatus("Enviando valor "+v+"…");sendEncrypted(logical(cmd,body)); }catch(Exception e){fail(e);} }
 
     @SuppressWarnings("MissingPermission") void sendRaw(int type,byte[] payload){ try{ byte[] f=frame(type,payload); writeChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE); writeChar.setValue(f); boolean ok=gatt.writeCharacteristic(writeChar); log("TX type="+type+" "+hex(payload)+(ok?"":" [write=false]")); }catch(Exception e){fail(e);} }
     void sendEncrypted(byte[] msg) throws Exception { sendRaw(1,crypt(padded(msg))); }
