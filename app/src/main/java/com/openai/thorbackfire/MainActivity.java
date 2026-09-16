@@ -12,6 +12,7 @@ import android.os.*;
 import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.widget.*;
+import android.util.Base64;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -34,9 +35,11 @@ public class MainActivity extends Activity {
     private static final UUID CCCD = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
     private static final int PKG=0x001f, VER=0x0005, MODE=0x0003, RULE=0x0021;
     private static final int REQ=1001;
+    private static final String RLM2_ORIGINAL_B64="UkxNMgADAAAAEgAAAYYAAAL6AAEAXAAAADIAAQAAABkAAAAYAAAABAAAAAgB9AAHAGQACQBkAAoAMgALASwADBlkAA0AAAAOASwADwGQABAJxAARC7gAIQABARIAAwISAAMDEgADARMLuAITCcQDEwakARQZZAIUGWQDFBlkARUAAgIVAAMDFQAEARYABAIWAAUDFgAGARcF3AIXBdwDFwXcARgAMgIYADIDGAAyARkAGQIZABkDGQAZARoAMgIaADIDGgAyARsAZAIbAGQDGwBkARwAVQIcAFUDHABVAR0AGQIdABkDHQAZAR4ABQIeAAUDHgAFAR8AHgIfAB4DHwAeASAAKAIgACgDIAAoASEPoAIhD6ADIQ+gASIAZAIiAGQDIgBkASMCWAIjAlgDIwJYASQAMgIkADIDJAAyASUAAAIlAAADJQAAACIBQAAjA+gAJBlkACUACgAmAw4AJxOIACgCvAApDawAAwAEACoAAAArAA8ALAPoAC0AAQAZAAAAGAAAAAIAXAAAAGQAAQABABkAAAAYAAAABAAAAAgAyAAHAGQACQAyAAoAGQALASwADBlkAA0AAAAOASwADwGQABAJxAARC7gAIQADARIAAwISAAMDEgADARMLuAITCcQDEwakARQZZAIUGWQDFBlkARUAAgIVAAMDFQAEARYABAIWAAUDFgAGARcF3AIXBdwDFwXcARgAMgIYADIDGAAyARkAGQIZABkDGQAZARoAMgIaADIDGgAyARsAZAIbAGQDGwBkARwAVQIcAFUDHABVAR0AGQIdABkDHQAZAR4ABQIeAAUDHgAFAR8AHgIfAB4DHwAeASAAKAIgACgDIAAoASEPoAIhD6ADIQ+gASIAZAIiAGQDIgBkASMCWAIjAlgDIwJYASQAMgIkADIDJAAyASUAAAIlAAADJQAAACIBQAAjA+gAJBlkACUACgAmA38AJxOIACgCvAApDawAAwAGACoAAAArAA8ALAPoAC0AAQAZAAAAGAApAAMAXAAAAEsAAQAEABkAAAAYAAAABAAAAAgAyAAHAGQACQAyAAoAGQALASwADBlkAA0AAAAOASwADwGQABAJxAARC7gAIQABARIAAwISAAMDEgADARMLuAITCcQDEwakARQZZAIUGWQDFBlkARUAAgIVAAMDFQAEARYABAIWAAUDFgAGARcF3AIXBdwDFwXcARgAMgIYADIDGAAyARkAGQIZABkDGQAZARoAMgIaADIDGgAyARsAZAIbAGQDGwBkARwAVQIcAFUDHABVAR0AGQIdABkDHQAZAR4ABQIeAAUDHgAFAR8AHgIfAB4DHwAeASAAKAIgACgDIAAoASEPoAIhD6ADIQ+gASIAZAIiAGQDIgBkASMCWAIjAlgDIwJYASQAMgIkADIDJAAyASUAAAIlAAADJQAAACIBQAAjA+gAJBlkACUACgAmAw4AJxOIACgCvAApDawAAwAHACoAAAArAA8ALAPoAC0AAQAZAAAAGAAAOMA=";
+    private static final String RLM2_AGGRESSIVE_V1_B64="UkxNMgADAAAAEgAAAYYAAAL6AAEAXAAAADIAAQAAABkAAAAYAAAABAAAAAgB9AAHAGQACQBkAAoAMgALASwADBlkAA0AAAAOASwADwGQABAJxAARC7gAIQABARIAAwISAAMDEgADARMLuAITCcQDEwakARQZZAIUGWQDFBlkARUAAgIVAAMDFQAEARYABAIWAAUDFgAGARcF3AIXBdwDFwXcARgAMgIYADIDGAAyARkAGQIZABkDGQAZARoAMgIaADIDGgAyARsAZAIbAGQDGwBkARwAVQIcAFUDHABVAR0AGQIdABkDHQAZAR4ABQIeAAUDHgAFAR8AHgIfAB4DHwAeASAAKAIgACgDIAAoASEPoAIhD6ADIQ+gASIAZAIiAGQDIgBkASMCWAIjAlgDIwJYASQAMgIkADIDJAAyASUAAAIlAAADJQAAACIBQAAjA+gAJBlkACUACgAmAw4AJxOIACgCvAApDawAAwAEACoAAAArAA8ALAPoAC0AAQAZAAAAGAAAAAIAXAAAAGQAAQABABkAAAAYAAAABAAAAAgAyAAHAGQACQAyAAoAGQALASwADBlkAA0AAAAOASwADwGQABAJxAARC7gAIQADARIAAwISAAMDEgADARMLuAITCcQDEwakARQZZAIUGWQDFBlkARUAAgIVAAMDFQAEARYABAIWAAUDFgAGARcF3AIXBdwDFwXcARgAMgIYADIDGAAyARkAGQIZABkDGQAZARoAMgIaADIDGgAyARsAZAIbAGQDGwBkARwAVQIcAFUDHABVAR0AGQIdABkDHQAZAR4ABQIeAAUDHgAFAR8AHgIfAB4DHwAeASAAKAIgACgDIAAoASEPoAIhD6ADIQ+gASIAZAIiAGQDIgBkASMCWAIjAlgDIwJYASQAMgIkADIDJAAyASUAAAIlAAADJQAAACIBQAAjA+gAJBlkACUACgAmA38AJxOIACgCvAApDawAAwAGACoAAAArAA8ALAPoAC0AAQAZAAAAGAApAAMAXAAAAEsAAQAEABkAAAAYAAAABAAAAAgAyAAHAGQACQAyAAoAGQALASwADBlkAA0AAAAOASwADwGQABAJxAARC7gAIQABARIAAwISAAMDEgADARMLuAITCcQDEwSwARQZZAIUGWQDFBlkARUAAgIVAAMDFQAFARYABAIWAAUDFgAIARcF3AIXBdwDFwXcARgAMgIYADIDGAAyARkAGQIZABkDGQAZARoAMgIaADIDGgAyARsAZAIbAGQDGwBkARwAVQIcAFUDHABVAR0AGQIdABkDHQAZAR4ABQIeAAUDHgAFAR8AHgIfAB4DHwAeASAAKAIgACgDIAAoASEPoAIhD6ADIQ+gASIAZAIiAGQDIgBkASMCWAIjAlgDIwJYASQAMgIkADIDJAAyASUAAAIlAAADJQAAACIBQAAjA+gAJBlkACUACgAmAw4AJxOIACgCvAApDawAAwAHACoAAAArAA8ALAPoAC0AAQAZAAAAGAAAIa8=";
 
     TextView status,current,logView;
-    Button connect,disconnect,read,set3,set4,set5,set7,dumpRules;
+    Button connect,disconnect,read,set3,set4,set5,set7,dumpRules,installAggressive,restoreOriginal;
     BluetoothAdapter adapter; BluetoothLeScanner scanner; BluetoothGatt gatt;
     BluetoothGattCharacteristic writeChar, notifyChar;
     byte[] rxBuf=new byte[0], key, ctr;
@@ -48,6 +51,10 @@ public class MainActivity extends Activity {
     int dumpType=0,dumpSize=0,dumpOffset=0,dumpChunk=200;
     boolean dumpBoth=false;
     byte[] dumpedRls,dumpedRlm;
+    byte[] writeData;
+    int writeOffset=0,writeLastSize=0;
+    final int writeBlockSize=8;
+    boolean writeRestore=false;
     final Handler h=new Handler(Looper.getMainLooper());
 
     @Override public void onCreate(Bundle b){ super.onCreate(b); buildUi();
@@ -59,11 +66,13 @@ public class MainActivity extends Activity {
         set5.setOnClickListener(v->sendSet(5));
         set7.setOnClickListener(v->sendSet(7));
         dumpRules.setOnClickListener(v->startDumpBoth());
+        installAggressive.setOnClickListener(v->startWriteRlm(false));
+        restoreOriginal.setOnClickListener(v->startWriteRlm(true));
     }
 
     void buildUi(){
         LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setPadding(28,28,28,28);
-        TextView title=new TextView(this); title.setText("THOR Backfire Tool v7 · Rule Dumper"); title.setTextSize(28); root.addView(title);
+        TextView title=new TextView(this); title.setText("THOR Backfire Tool v8 · Aggressive S63"); title.setTextSize(28); root.addView(title);
         TextView sub=new TextView(this); sub.setText("Herramienta experimental para leer/escribir la regla de pops del THOR. Mantén cerrada la app THOR oficial mientras esté conectada."); sub.setTextSize(16); root.addView(sub);
         status=new TextView(this); status.setText("Sin conectar"); status.setTextSize(18); status.setPadding(0,24,0,8); root.addView(status);
         connect=btn("Conectar al THOR"); root.addView(connect); disconnect=btn("Desconectar"); disconnect.setEnabled(false); root.addView(disconnect);
@@ -84,6 +93,8 @@ public class MainActivity extends Activity {
         root.addView(row2);
         read=btn("Leer valor actual"); read.setEnabled(false); root.addView(read);
         dumpRules=btn("EXTRAER REGLAS S63 (RLS2 + RLM2)"); dumpRules.setEnabled(false); root.addView(dumpRules);
+        installAggressive=btn("INSTALAR PETARDEO AGRESIVO v1"); installAggressive.setEnabled(false); root.addView(installAggressive);
+        restoreOriginal=btn("RESTAURAR RLM2 ORIGINAL"); restoreOriginal.setEnabled(false); root.addView(restoreOriginal);
         TextView lh=new TextView(this); lh.setText("\nRegistro"); lh.setTextSize(18); root.addView(lh);
         logView=new TextView(this); logView.setTextSize(12); logView.setMovementMethod(new ScrollingMovementMethod());
         ScrollView sv=new ScrollView(this); sv.addView(logView); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
@@ -92,7 +103,8 @@ public class MainActivity extends Activity {
     Button btn(String s){ Button b=new Button(this); b.setText(s); return b; }
     void uiStatus(String s){ runOnUiThread(()->status.setText(s)); }
     void log(String s){ runOnUiThread(()->{ logView.append("["+new java.text.SimpleDateFormat("HH:mm:ss",Locale.getDefault()).format(new Date())+"] "+s+"\n"); }); }
-    void enable(boolean on){ runOnUiThread(()->{connect.setEnabled(!on);disconnect.setEnabled(on);read.setEnabled(on);set3.setEnabled(on);set4.setEnabled(on);set5.setEnabled(on);set7.setEnabled(on);dumpRules.setEnabled(on);}); }
+    void enable(boolean on){ runOnUiThread(()->{connect.setEnabled(!on);disconnect.setEnabled(on);read.setEnabled(on);set3.setEnabled(on);set4.setEnabled(on);set5.setEnabled(on);set7.setEnabled(on);dumpRules.setEnabled(on);installAggressive.setEnabled(on);restoreOriginal.setEnabled(on);}); }
+    void busy(boolean on){ runOnUiThread(()->{read.setEnabled(!on);set3.setEnabled(!on);set4.setEnabled(!on);set5.setEnabled(!on);set7.setEnabled(!on);dumpRules.setEnabled(!on);installAggressive.setEnabled(!on);restoreOriginal.setEnabled(!on);}); }
 
     void ensurePermsAndScan(){
         if(Build.VERSION.SDK_INT>=31){
@@ -219,10 +231,60 @@ public class MainActivity extends Activity {
                     saveDumpFile(dumpType,data);
                     if(dumpType==5 && dumpBoth){ startDump(6); }
                     else {
-                        dumpBoth=false; step="idle";
-                        if(dumpedRls!=null && dumpedRlm!=null){ saveBundleZip(); uiStatus("EXTRACCIÓN COMPLETA · ZIP guardado en Descargas"); }
-                        else uiStatus("Extracción terminada");
+                        dumpBoth=false;
+                        if(dumpedRls!=null && dumpedRlm!=null){ saveBundleZip(); log("EXTRACCIÓN COMPLETA · ZIP guardado en Descargas"); }
+                        step="reactivate_after_dump"; waitFor(1,0x0045);
+                        uiStatus("Extracción completa. Reactivando sonido…");
+                        sendEncrypted(logical(0x0045,u16(4)));
                     }
+                    break;
+                }
+                case "reactivate_after_dump": {
+                    step="idle";
+                    uiStatus("EXTRACCIÓN COMPLETA · sonido reactivado");
+                    break;
+                }
+                case "write_group_start": {
+                    if(writeError(cmd,msg,"inicio de grupo"))break;
+                    byte[] fileId=new byte[]{6,(byte)(PKG>>>8),(byte)PKG,(byte)VER};
+                    step="write_file_start"; waitFor(1,0x0071);
+                    uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · preparando archivo…");
+                    sendEncrypted(logical(0x0071,cat(fileId,u32(writeData.length))));
+                    break;
+                }
+                case "write_file_start": {
+                    if(writeError(cmd,msg,"inicio de archivo"))break;
+                    writeOffset=0; sendNextWriteBlock(); break;
+                }
+                case "write_block": {
+                    if(writeError(cmd,msg,"bloque"))break;
+                    writeOffset+=writeLastSize;
+                    if(writeOffset>=writeData.length){
+                        step="write_commit_file"; waitFor(1,0x0073);
+                        uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · cerrando archivo…");
+                        sendEncrypted(logical(0x0073,new byte[0]));
+                    }else sendNextWriteBlock();
+                    break;
+                }
+                case "write_commit_file": {
+                    if(writeError(cmd,msg,"commit de archivo"))break;
+                    step="write_commit_group"; waitFor(1,0x0074);
+                    uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · aplicando…");
+                    sendEncrypted(logical(0x0074,new byte[0]));
+                    break;
+                }
+                case "write_commit_group": {
+                    if(writeError(cmd,msg,"commit de grupo"))break;
+                    step="reactivate_after_write"; waitFor(1,0x0045);
+                    uiStatus("Reglas escritas. Reactivando sonido…");
+                    sendEncrypted(logical(0x0045,u16(4)));
+                    break;
+                }
+                case "reactivate_after_write": {
+                    boolean wasRestore=writeRestore;
+                    step="idle"; busy(false);
+                    uiStatus(wasRestore?"ORIGINAL RESTAURADO · sonido reactivado":"AGRESIVO v1 INSTALADO · sonido reactivado");
+                    log(wasRestore?"RLM2 original restaurado":"RLM2 agresivo v1 instalado");
                     break;
                 }
                 case "set":
@@ -255,6 +317,39 @@ public class MainActivity extends Activity {
     void sendRead(){ if(ctr==null)return; step="read";pendingSetValue=-1; try{sendReadInternal();}catch(Exception e){fail(e);} }
     void sendReadInternal() throws Exception { int cmd=0x0034;waitFor(1,cmd);sendEncrypted(logical(cmd,cat(u16(PKG),u16(MODE)))); }
     void sendSet(int v){ if(ctr==null)return; try{ int cmd=0x0043;byte[] body=cat(u16(PKG),u16(VER),u16(MODE),u16(1),u16(RULE),u16(v)); pendingSetValue=v;pendingSetRejected=false;pendingSetError=-1;step="set";waitFor(1,cmd);uiStatus("Enviando valor "+v+"…");sendEncrypted(logical(cmd,body)); }catch(Exception e){fail(e);} }
+
+    void startWriteRlm(boolean restore){
+        if(ctr==null){uiStatus("Conecta primero al THOR");return;}
+        try{
+            writeRestore=restore;
+            writeData=Base64.decode(restore?RLM2_ORIGINAL_B64:RLM2_AGGRESSIVE_V1_B64,Base64.DEFAULT);
+            if(writeData.length<8 || writeData[0]!='R' || writeData[1]!='L' || writeData[2]!='M' || writeData[3]!='2')throw new Exception("RLM2 embebido inválido");
+            int got=(writeData[writeData.length-2]&255)|((writeData[writeData.length-1]&255)<<8);
+            int calc=crc16(Arrays.copyOf(writeData,writeData.length-2));
+            if(got!=calc)throw new Exception("CRC del RLM2 embebido inválido");
+            busy(true); writeOffset=0; writeLastSize=0;
+            step="write_group_start"; waitFor(1,0x0070);
+            uiStatus(restore?"RESTAURANDO ORIGINAL…":"INSTALANDO AGRESIVO v1…");
+            log((restore?"RESTORE":"MOD")+" RLM2 bytes="+writeData.length+" crc=0x"+hx(got));
+            sendEncrypted(logical(0x0070,u16(1)));
+        }catch(Exception e){busy(false);fail(e);step="idle";}
+    }
+    void sendNextWriteBlock() throws Exception {
+        int n=Math.min(writeBlockSize,writeData.length-writeOffset);
+        if(n<=0)throw new Exception("Bloque de escritura vacío");
+        byte[] chunk=Arrays.copyOfRange(writeData,writeOffset,writeOffset+n);
+        writeLastSize=n;
+        step="write_block"; waitFor(1,0x0072);
+        uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · "+writeOffset+"/"+writeData.length+" bytes…");
+        sendEncrypted(logical(0x0072,chunk));
+    }
+    boolean writeError(int cmd,byte[] msg,String where){
+        if((cmd&0x8000)==0)return false;
+        int ec=(msg!=null&&msg.length>=4)?u16at(msg,2):-1;
+        log("ERROR escritura "+where+" code=0x"+hx(ec));
+        uiStatus("THOR rechazó escritura en "+where+" · 0x"+hx(ec));
+        step="idle";busy(false);return true;
+    }
 
     void startDumpBoth(){
         if(ctr==null){uiStatus("Conecta primero al THOR");return;}
