@@ -52,9 +52,10 @@ public class MainActivity extends Activity {
     boolean dumpBoth=false;
     byte[] dumpedRls,dumpedRlm;
     byte[] writeData;
-    int writeOffset=0,writeLastSize=0;
+    int writeOffset=0,writeLastSize=0,writeBlockIndex=0,writeStatusPolls=0;
     final int writeBlockSize=8;
     boolean writeRestore=false;
+    final byte[] writeTargetFileId=new byte[]{6,(byte)(PKG>>>8),(byte)PKG,(byte)VER};
     final Handler h=new Handler(Looper.getMainLooper());
 
     @Override public void onCreate(Bundle b){ super.onCreate(b); buildUi();
@@ -72,7 +73,7 @@ public class MainActivity extends Activity {
 
     void buildUi(){
         LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setPadding(28,28,28,28);
-        TextView title=new TextView(this); title.setText("THOR Backfire Tool v8 · Aggressive S63"); title.setTextSize(28); root.addView(title);
+        TextView title=new TextView(this); title.setText("THOR Backfire Tool v9 · Safe Transfer S63"); title.setTextSize(28); root.addView(title);
         TextView sub=new TextView(this); sub.setText("Herramienta experimental para leer/escribir la regla de pops del THOR. Mantén cerrada la app THOR oficial mientras esté conectada."); sub.setTextSize(16); root.addView(sub);
         status=new TextView(this); status.setText("Sin conectar"); status.setTextSize(18); status.setPadding(0,24,0,8); root.addView(status);
         connect=btn("Conectar al THOR"); root.addView(connect); disconnect=btn("Desconectar"); disconnect.setEnabled(false); root.addView(disconnect);
@@ -244,40 +245,125 @@ public class MainActivity extends Activity {
                     uiStatus("EXTRACCIÓN COMPLETA · sonido reactivado");
                     break;
                 }
+                case "write_status": {
+                    if(writeError(cmd,msg,"consulta de estado"))break;
+                    if(msg==null || msg.length<14){ writeFail("Estado de transferencia inválido"); break; }
+                    int state=u16at(msg,2);
+                    int err=u16at(msg,4);
+                    byte[] activeFileId=Arrays.copyOfRange(msg,6,10);
+                    int byteCount=u32at(msg,10);
+                    boolean sameFile=Arrays.equals(activeFileId,writeTargetFileId);
+                    log("TRANSFER status state="+state+" err=0x"+hx(err)+" fileId="+hex(activeFileId)+" bytes="+byteCount+" same="+sameFile);
+
+                    boolean needStartGroup=false;
+                    boolean needStartFile=true;
+                    writeBlockIndex=0;
+                    writeOffset=0;
+
+                    if(state==0){
+                        needStartGroup=true;
+                    }else if(!sameFile && state!=1){
+                        log("Sesión previa pertenece a otro archivo; reiniciando grupo");
+                        needStartGroup=true;
+                    }else if(state==1){
+                        // GROUP_STARTED: group exists, begin our only file.
+                        needStartFile=true;
+                    }else if(state==2){
+                        // FILE_STARTED: official client starts from block 0 unless device reports an error.
+                        needStartFile=(err!=0);
+                    }else if(state==3){
+                        if(err!=0){
+                            log("DOWNLOADING con error; reiniciando archivo");
+                            needStartFile=true;
+                        }else{
+                            needStartFile=false;
+                            writeBlockIndex=Math.max(0,byteCount/writeBlockSize);
+                            writeOffset=Math.min(writeData.length,writeBlockIndex*writeBlockSize);
+                            log("Reanudando desde bloque "+writeBlockIndex+" offset="+writeOffset);
+                        }
+                    }else if(state==4){
+                        // Our only file is already committed: official client moves directly to CommitGroup.
+                        needStartFile=false;
+                        writeOffset=writeData.length;
+                        writeBlockIndex=(writeData.length+writeBlockSize-1)/writeBlockSize;
+                        step="write_commit_group"; waitFor(1,0x0074);
+                        uiStatus("Archivo ya confirmado. Cerrando grupo…");
+                        sendEncrypted(logical(0x0074,new byte[0]));
+                        break;
+                    }else if(state==5){
+                        // GROUP_COMMITTED: official client starts a fresh group.
+                        needStartGroup=true;
+                    }else{
+                        log("Estado desconocido "+state+"; reiniciando grupo");
+                        needStartGroup=true;
+                    }
+
+                    if(needStartGroup){
+                        step="write_group_start"; waitFor(1,0x0070);
+                        uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · iniciando grupo…");
+                        sendEncrypted(logical(0x0070,u16(1)));
+                    }else if(needStartFile){
+                        sendWriteStartFile();
+                    }else{
+                        sendNextWriteBlockOrCommit();
+                    }
+                    break;
+                }
                 case "write_group_start": {
                     if(writeError(cmd,msg,"inicio de grupo"))break;
-                    byte[] fileId=new byte[]{6,(byte)(PKG>>>8),(byte)PKG,(byte)VER};
-                    step="write_file_start"; waitFor(1,0x0071);
-                    uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · preparando archivo…");
-                    sendEncrypted(logical(0x0071,cat(fileId,u32(writeData.length))));
+                    sendWriteStartFile();
                     break;
                 }
                 case "write_file_start": {
                     if(writeError(cmd,msg,"inicio de archivo"))break;
-                    writeOffset=0; sendNextWriteBlock(); break;
+                    writeBlockIndex=0; writeOffset=0;
+                    sendNextWriteBlockOrCommit();
+                    break;
                 }
                 case "write_block": {
-                    if(writeError(cmd,msg,"bloque"))break;
+                    if(writeError(cmd,msg,"bloque "+writeBlockIndex))break;
                     writeOffset+=writeLastSize;
-                    if(writeOffset>=writeData.length){
-                        step="write_commit_file"; waitFor(1,0x0073);
-                        uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · cerrando archivo…");
-                        sendEncrypted(logical(0x0073,new byte[0]));
-                    }else sendNextWriteBlock();
+                    writeBlockIndex++;
+                    sendNextWriteBlockOrCommit();
                     break;
                 }
                 case "write_commit_file": {
                     if(writeError(cmd,msg,"commit de archivo"))break;
                     step="write_commit_group"; waitFor(1,0x0074);
-                    uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · aplicando…");
+                    uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · confirmando grupo…");
                     sendEncrypted(logical(0x0074,new byte[0]));
                     break;
                 }
                 case "write_commit_group": {
                     if(writeError(cmd,msg,"commit de grupo"))break;
-                    step="reactivate_after_write"; waitFor(1,0x0045);
-                    uiStatus("Reglas escritas. Reactivando sonido…");
-                    sendEncrypted(logical(0x0045,u16(4)));
+                    writeStatusPolls=0;
+                    pollWriteReady();
+                    break;
+                }
+                case "write_polling": {
+                    if(writeError(cmd,msg,"polling de aplicación"))break;
+                    if(msg==null || msg.length<6){ writeFail("Respuesta de polling inválida"); break; }
+                    int pollStatus=u16at(msg,2);
+                    int progress=u16at(msg,4);
+                    log("POLL status="+pollStatus+" progress="+progress+" poll="+writeStatusPolls);
+                    if(pollStatus==0){
+                        uiStatus("THOR terminó de aplicar reglas. Esperando 1 s…");
+                        h.postDelayed(()->{
+                            try{
+                                step="reactivate_after_write"; waitFor(1,0x0045);
+                                uiStatus("Transferencia lista. Reactivando sonido…");
+                                sendEncrypted(logical(0x0045,u16(4)));
+                            }catch(Exception e){busy(false);fail(e);step="idle";}
+                        },1000);
+                    }else if(pollStatus==2){
+                        writeFail("THOR informó error procesando reglas (progress="+progress+")");
+                    }else if(++writeStatusPolls>=100){
+                        writeFail("Timeout esperando a que THOR procese las reglas");
+                    }else{
+                        h.postDelayed(()->{
+                            try{pollWriteReady();}catch(Exception e){busy(false);fail(e);step="idle";}
+                        },200);
+                    }
                     break;
                 }
                 case "reactivate_after_write": {
@@ -318,6 +404,7 @@ public class MainActivity extends Activity {
     void sendReadInternal() throws Exception { int cmd=0x0034;waitFor(1,cmd);sendEncrypted(logical(cmd,cat(u16(PKG),u16(MODE)))); }
     void sendSet(int v){ if(ctr==null)return; try{ int cmd=0x0043;byte[] body=cat(u16(PKG),u16(VER),u16(MODE),u16(1),u16(RULE),u16(v)); pendingSetValue=v;pendingSetRejected=false;pendingSetError=-1;step="set";waitFor(1,cmd);uiStatus("Enviando valor "+v+"…");sendEncrypted(logical(cmd,body)); }catch(Exception e){fail(e);} }
 
+    @SuppressWarnings("MissingPermission")
     void startWriteRlm(boolean restore){
         if(ctr==null){uiStatus("Conecta primero al THOR");return;}
         try{
@@ -327,21 +414,43 @@ public class MainActivity extends Activity {
             int got=(writeData[writeData.length-2]&255)|((writeData[writeData.length-1]&255)<<8);
             int calc=crc16(Arrays.copyOf(writeData,writeData.length-2));
             if(got!=calc)throw new Exception("CRC del RLM2 embebido inválido");
-            busy(true); writeOffset=0; writeLastSize=0;
-            step="write_group_start"; waitFor(1,0x0070);
-            uiStatus(restore?"RESTAURANDO ORIGINAL…":"INSTALANDO AGRESIVO v1…");
-            log((restore?"RESTORE":"MOD")+" RLM2 bytes="+writeData.length+" crc=0x"+hx(got));
-            sendEncrypted(logical(0x0070,u16(1)));
+            if(gatt!=null)gatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH);
+            busy(true); writeOffset=0; writeLastSize=0; writeBlockIndex=0; writeStatusPolls=0;
+            step="write_status"; waitFor(1,0x0075);
+            uiStatus((restore?"RESTAURANDO ORIGINAL":"INSTALANDO AGRESIVO v1")+" · consultando sesión…");
+            log((restore?"RESTORE":"MOD")+" RLM2 bytes="+writeData.length+" crc=0x"+hx(got)+" blockSize="+writeBlockSize);
+            sendEncrypted(logical(0x0075,new byte[0]));
         }catch(Exception e){busy(false);fail(e);step="idle";}
+    }
+    void sendWriteStartFile() throws Exception {
+        step="write_file_start"; waitFor(1,0x0071);
+        uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · preparando archivo…");
+        sendEncrypted(logical(0x0071,cat(writeTargetFileId,u32(writeData.length))));
+    }
+    void sendNextWriteBlockOrCommit() throws Exception {
+        if(writeOffset>=writeData.length){
+            step="write_commit_file"; waitFor(1,0x0073);
+            uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · confirmando archivo…");
+            sendEncrypted(logical(0x0073,new byte[0]));
+        }else{
+            sendNextWriteBlock();
+        }
     }
     void sendNextWriteBlock() throws Exception {
         int n=Math.min(writeBlockSize,writeData.length-writeOffset);
         if(n<=0)throw new Exception("Bloque de escritura vacío");
         byte[] chunk=Arrays.copyOfRange(writeData,writeOffset,writeOffset+n);
+        byte[] block=cat(u16(writeBlockIndex),u16(n),chunk);
         writeLastSize=n;
         step="write_block"; waitFor(1,0x0072);
-        uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · "+writeOffset+"/"+writeData.length+" bytes…");
-        sendEncrypted(logical(0x0072,chunk));
+        uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · "+writeOffset+"/"+writeData.length+" bytes · bloque "+writeBlockIndex);
+        log("WRITE block="+writeBlockIndex+" len="+n+" offset="+writeOffset);
+        sendEncrypted(logical(0x0072,block));
+    }
+    void pollWriteReady() throws Exception {
+        step="write_polling"; waitFor(1,0x0008);
+        uiStatus("THOR procesando reglas…");
+        sendEncrypted(logical(0x0008,new byte[0]));
     }
     boolean writeError(int cmd,byte[] msg,String where){
         if((cmd&0x8000)==0)return false;
@@ -349,6 +458,11 @@ public class MainActivity extends Activity {
         log("ERROR escritura "+where+" code=0x"+hx(ec));
         uiStatus("THOR rechazó escritura en "+where+" · 0x"+hx(ec));
         step="idle";busy(false);return true;
+    }
+    void writeFail(String why){
+        log("ERROR transferencia: "+why);
+        uiStatus("ERROR transferencia: "+why);
+        step="idle";busy(false);
     }
 
     void startDumpBoth(){
