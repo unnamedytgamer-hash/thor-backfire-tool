@@ -36,10 +36,12 @@ public class MainActivity extends Activity {
     private static final int PKG=0x001f, VER=0x0005, MODE=0x0003, RULE=0x0021;
     private static final int REQ=1001;
     private static final String RLM2_ORIGINAL_B64="UkxNMgADAAAAEgAAAYYAAAL6AAEAXAAAADIAAQAAABkAAAAYAAAABAAAAAgB9AAHAGQACQBkAAoAMgALASwADBlkAA0AAAAOASwADwGQABAJxAARC7gAIQABARIAAwISAAMDEgADARMLuAITCcQDEwakARQZZAIUGWQDFBlkARUAAgIVAAMDFQAEARYABAIWAAUDFgAGARcF3AIXBdwDFwXcARgAMgIYADIDGAAyARkAGQIZABkDGQAZARoAMgIaADIDGgAyARsAZAIbAGQDGwBkARwAVQIcAFUDHABVAR0AGQIdABkDHQAZAR4ABQIeAAUDHgAFAR8AHgIfAB4DHwAeASAAKAIgACgDIAAoASEPoAIhD6ADIQ+gASIAZAIiAGQDIgBkASMCWAIjAlgDIwJYASQAMgIkADIDJAAyASUAAAIlAAADJQAAACIBQAAjA+gAJBlkACUACgAmAw4AJxOIACgCvAApDawAAwAEACoAAAArAA8ALAPoAC0AAQAZAAAAGAAAAAIAXAAAAGQAAQABABkAAAAYAAAABAAAAAgAyAAHAGQACQAyAAoAGQALASwADBlkAA0AAAAOASwADwGQABAJxAARC7gAIQADARIAAwISAAMDEgADARMLuAITCcQDEwakARQZZAIUGWQDFBlkARUAAgIVAAMDFQAEARYABAIWAAUDFgAGARcF3AIXBdwDFwXcARgAMgIYADIDGAAyARkAGQIZABkDGQAZARoAMgIaADIDGgAyARsAZAIbAGQDGwBkARwAVQIcAFUDHABVAR0AGQIdABkDHQAZAR4ABQIeAAUDHgAFAR8AHgIfAB4DHwAeASAAKAIgACgDIAAoASEPoAIhD6ADIQ+gASIAZAIiAGQDIgBkASMCWAIjAlgDIwJYASQAMgIkADIDJAAyASUAAAIlAAADJQAAACIBQAAjA+gAJBlkACUACgAmA38AJxOIACgCvAApDawAAwAGACoAAAArAA8ALAPoAC0AAQAZAAAAGAApAAMAXAAAAEsAAQAEABkAAAAYAAAABAAAAAgAyAAHAGQACQAyAAoAGQALASwADBlkAA0AAAAOASwADwGQABAJxAARC7gAIQABARIAAwISAAMDEgADARMLuAITCcQDEwakARQZZAIUGWQDFBlkARUAAgIVAAMDFQAEARYABAIWAAUDFgAGARcF3AIXBdwDFwXcARgAMgIYADIDGAAyARkAGQIZABkDGQAZARoAMgIaADIDGgAyARsAZAIbAGQDGwBkARwAVQIcAFUDHABVAR0AGQIdABkDHQAZAR4ABQIeAAUDHgAFAR8AHgIfAB4DHwAeASAAKAIgACgDIAAoASEPoAIhD6ADIQ+gASIAZAIiAGQDIgBkASMCWAIjAlgDIwJYASQAMgIkADIDJAAyASUAAAIlAAADJQAAACIBQAAjA+gAJBlkACUACgAmAw4AJxOIACgCvAApDawAAwAHACoAAAArAA8ALAPoAC0AAQAZAAAAGAAAOMA=";
-    private static final String RLM2_AGGRESSIVE_V1_B64="UkxNMgADAAAAEgAAAYYAAAL6AAEAXAAAADIAAQAAABkAAAAYAAAABAAAAAgB9AAHAGQACQBkAAoAMgALASwADBlkAA0AAAAOASwADwGQABAJxAARC7gAIQABARIAAwISAAMDEgADARMLuAITCcQDEwakARQZZAIUGWQDFBlkARUAAgIVAAMDFQAEARYABAIWAAUDFgAGARcF3AIXBdwDFwXcARgAMgIYADIDGAAyARkAGQIZABkDGQAZARoAMgIaADIDGgAyARsAZAIbAGQDGwBkARwAVQIcAFUDHABVAR0AGQIdABkDHQAZAR4ABQIeAAUDHgAFAR8AHgIfAB4DHwAeASAAKAIgACgDIAAoASEPoAIhD6ADIQ+gASIAZAIiAGQDIgBkASMCWAIjAlgDIwJYASQAMgIkADIDJAAyASUAAAIlAAADJQAAACIBQAAjA+gAJBlkACUACgAmAw4AJxOIACgCvAApDawAAwAEACoAAAArAA8ALAPoAC0AAQAZAAAAGAAAAAIAXAAAAGQAAQABABkAAAAYAAAABAAAAAgAyAAHAGQACQAyAAoAGQALASwADBlkAA0AAAAOASwADwGQABAJxAARC7gAIQADARIAAwISAAMDEgADARMLuAITCcQDEwakARQZZAIUGWQDFBlkARUAAgIVAAMDFQAEARYABAIWAAUDFgAGARcF3AIXBdwDFwXcARgAMgIYADIDGAAyARkAGQIZABkDGQAZARoAMgIaADIDGgAyARsAZAIbAGQDGwBkARwAVQIcAFUDHABVAR0AGQIdABkDHQAZAR4ABQIeAAUDHgAFAR8AHgIfAB4DHwAeASAAKAIgACgDIAAoASEPoAIhD6ADIQ+gASIAZAIiAGQDIgBkASMCWAIjAlgDIwJYASQAMgIkADIDJAAyASUAAAIlAAADJQAAACIBQAAjA+gAJBlkACUACgAmA38AJxOIACgCvAApDawAAwAGACoAAAArAA8ALAPoAC0AAQAZAAAAGAApAAMAXAAAAEsAAQAEABkAAAAYAAAABAAAAAgAyAAHAGQACQAyAAoAGQALASwADBlkAA0AAAAOASwADwGQABAJxAARC7gAIQABARIAAwISAAMDEgADARMLuAITCcQDEwSwARQZZAIUGWQDFBlkARUAAgIVAAMDFQAFARYABAIWAAUDFgAIARcF3AIXBdwDFwXcARgAMgIYADIDGAAyARkAGQIZABkDGQAZARoAMgIaADIDGgAyARsAZAIbAGQDGwBkARwAVQIcAFUDHABVAR0AGQIdABkDHQAZAR4ABQIeAAUDHgAFAR8AHgIfAB4DHwAeASAAKAIgACgDIAAoASEPoAIhD6ADIQ+gASIAZAIiAGQDIgBkASMCWAIjAlgDIwJYASQAMgIkADIDJAAyASUAAAIlAAADJQAAACIBQAAjA+gAJBlkACUACgAmAw4AJxOIACgCvAApDawAAwAHACoAAAArAA8ALAPoAC0AAQAZAAAAGAAAIa8=";
+    private static final String RLM2_AGGRESSIVE_V2_B64="UkxNMgADAAAAEgAAAYYAAAL6AAEAXAAAADIAAQAAABkAAAAYAAAABAAAAAgB9AAHAGQACQBkAAoAMgALASwADBlkAA0AAAAOASwADwGQABAJxAARC7gAIQABARIAAwISAAMDEgADARMLuAITCcQDEwakARQZZAIUGWQDFBlkARUAAgIVAAMDFQAEARYABAIWAAUDFgAGARcF3AIXBdwDFwXcARgAMgIYADIDGAAyARkAGQIZABkDGQAZARoAMgIaADIDGgAyARsAZAIbAGQDGwBkARwAVQIcAFUDHABVAR0AGQIdABkDHQAZAR4ABQIeAAUDHgAFAR8AHgIfAB4DHwAeASAAKAIgACgDIAAoASEPoAIhD6ADIQ+gASIAZAIiAGQDIgBkASMCWAIjAlgDIwJYASQAMgIkADIDJAAyASUAAAIlAAADJQAAACIBQAAjA+gAJBlkACUACgAmAw4AJxOIACgCvAApDawAAwAEACoAAAArAA8ALAPoAC0AAQAZAAAAGAAAAAIAXAAAAGQAAQABABkAAAAYAAAABAAAAAgAyAAHAGQACQAyAAoAGQALASwADBlkAA0AAAAOASwADwGQABAJxAARC7gAIQADARIAAwISAAMDEgADARMLuAITCcQDEwakARQZZAIUGWQDFBlkARUAAgIVAAMDFQAEARYABAIWAAUDFgAGARcF3AIXBdwDFwXcARgAMgIYADIDGAAyARkAGQIZABkDGQAZARoAMgIaADIDGgAyARsAZAIbAGQDGwBkARwAVQIcAFUDHABVAR0AGQIdABkDHQAZAR4ABQIeAAUDHgAFAR8AHgIfAB4DHwAeASAAKAIgACgDIAAoASEPoAIhD6ADIQ+gASIAZAIiAGQDIgBkASMCWAIjAlgDIwJYASQAMgIkADIDJAAyASUAAAIlAAADJQAAACIBQAAjA+gAJBlkACUACgAmA38AJxOIACgCvAApDawAAwAGACoAAAArAA8ALAPoAC0AAQAZAAAAGAApAAMAXAAAAEsAAQAEABkAAAAYAAAABAAAAAgAyAAHAGQACQAyAAoAGQALASwADBlkAA0AAAAOASwADwGQABAJxAARC7gAIQABARIAAwISAAMDEgADARMLuAITCcQDEwMgARQZZAIUGWQDFBlkARUAAgIVAAMDFQAIARYABAIWAAUDFgAMARcF3AIXBdwDFwXcARgAMgIYADIDGAAyARkAGQIZABkDGQAZARoAMgIaADIDGgAyARsAZAIbAGQDGwBkARwAVQIcAFUDHABVAR0AGQIdABkDHQAZAR4ABQIeAAUDHgAFAR8AHgIfAB4DHwAeASAAKAIgACgDIAAoASEPoAIhD6ADIQ+gASIAZAIiAGQDIgBkASMCWAIjAlgDIwJYASQAMgIkADIDJAAyASUAAAIlAAADJQAAACIBQAAjA+gAJBlkACUACgAmAw4AJxOIACgCvAApDawAAwAHACoAAAArAA8ALAPoAC0AAQAZAAAAGAAAWls=";
+    private static final String RLS2_ORIGINAL_B64="UkxTMgBFAAABGgAAAUoAAAF6AAABqgAAAdoAAAIKAAACOgAAAmoAAAKaAAACygAAAvoAAAMqAAADWgAAA4oAAAO6AAAD6gAABBoAAARKAAAEegAABKoAAATaAAAFCgAABToAAAVqAAAFmgAABcoAAAX6AAAGKgAABloAAAaKAAAGugAABuoAAAcaAAAHSgAAB3oAAAeqAAAH2gAACAoAAAg6AAAIagAACJoAAAjKAAAI+gAACSoAAAlaAAAJigAACboAAAnqAAAKGgAACkoAAAp6AAAKqgAACtoAAAsKAAALOgAAC2oAAAuaAAALygAAC/oAAAwqAAAMWgAADIoAAAy6AAAM6gAADRoAAA1KAAANegAADaoAAA3aAAEACwAAAAUAAQMOAAIBLAADGWQABAAoAAUAAAAGAAAABwAAAAgAAAAJArwACgK8AAIACwAAAAEAAQMOAAIBLAADA2sABAAoAAUAAAAGAEsABwAAAAgABQAJArwACgK8AAMACwAAAAEAAQNPAAIDIAADA7YABAApAAUASwAGAEoABwAFAAgABQAJArwACgK8AAQACwAAAAEAAQN/AAIDbAADA+gABAAqAAUASgAGADEABwAFAAgABQAJASwACgEsAAUACwAAAAEAAQPOAAIDtwADBEwABAArAAUAMQAGAGMABwAFAAgABQAJArwACgK8AAYACwAAAAMAAQP/AAID6QADBLAABAAsAAUAYwAGAGMABwAFAAgABQAJArwACgK8AAcACwAAAAMAAQRxAAIETQADBRQABAAqAAUAYwAGAGMABwAFAAgABQAJArwACgK8AAgACwAAAAMAAQTTAAIEsQADBaoABAAoAAUAYwAGAJUABwAFAAgABQAJArwACgK8AAkACwAAAAMAAQVqAAIFFQADBkAABAAmAAUAlQAGAJUABwAFAAgABQAJArwACgK8AAoACwAAAAMAAQYSAAIFqwADBzoABAAkAAUAlQAGAJUABwAFAAgABQAJArwACgK8AAsACwAAAAMAAQb3AAIGQQADB9AABAAiAAUAlQAGAJUABwAFAAgABQAJArwACgK8AAwACwAAAAMAAQfWAAIHOwADCMoABAAgAAUAlQAGAPkABwAFAAgABQAJArwACgK8AA0ACwAAAAMAAQiNAAIH0QADCigABAAeAAUA+QAGAV0ABwAFAAgABQAJArwACgK8AA4ACwAAAAMAAQl0AAIIywADCvAABAAcAAUBXQAGAMcABwAFAAgABQAJArwACgK8AA8ACwAAAAMAAQqlAAIKKQADDOQABAAaAAUAxwAGAfMABwAFAAgABQAJArwACgK8ABAACwAAAAMAAQulAAIK8QADDtgABAAYAAUB8wAGAfMABwAFAAgABQAJArwACgK8ABEACwAAAAMAAQ1iAAIM5QADEAQABAAWAAUB8wAGASsABwAFAAgABQAJArwACgK8ABIACwAAAAMAAQ9WAAIO2QADEfgABAAUAAUBKwAGAfMABwAFAAgABQAJArwACgK8ABMACwAAAAMAARB0AAIQBQADFLQABAASAAUB8wAGArsABwAFAAgABQAJArwACgK8ABQACwAAAAMAARKaAAIR+QADFkQABAAQAAUCuwAGAY8ABwAFAAgABQAJArwACgK8ABUACwAAAAMAARUuAAIUtQADGJwABAAOAAUBjwAGAlcABwAFAAgABQAJArwACgK8ABYACwAAAAMAARcBAAIWRQADGWQABAAMAAUCVwAGAAAABwAFAAgAAAAJArwACgK8ABcACwAAAAIAAQQMAAID6QADBOIABAAsAAUAYwAGAJUABwAFAAgABQAJArwACgK8ABgACwAAAAIAAQRbAAIETQADBXgABAAvAAUAlQAGAJUABwAFAAgABQAJArwACgK8ABkACwAAAAIAAQU7AAIE4wADBg4ABAAyAAUAlQAGAJUABwAFAAgABQAJArwACgK8ABoACwAAAAIAAQXSAAIFeQADBtYABAA1AAUAlQAGAMcABwAFAAgABQAJArwACgK8ABsACwAAAAIAAQZvAAIGDwADB9AABAA4AAUAxwAGAPkABwAFAAgABQAJArwACgK8ABwACwAAAAIAAQdpAAIG1wADCMoABAA7AAUA+QAGAPkABwAFAAgABQAJArwACgK8AB0ACwAAAAIAAQg1AAIH0QADCcQABAA+AAUA+QAGAPkABwAFAAgABQAJArwACgK8AB4ACwAAAAIAAQlYAAIIywADCr4ABABBAAUA+QAGAPkABwAFAAgABQAJArwACgK8AB8ACwAAAAIAAQpRAAIJxQADDIAABABEAAUA+QAGAcEABwAFAAgABQAJArwACgK8ACAACwAAAAIAAQtxAAIKvwADDhAABABHAAUBwQAGAY8ABwAFAAgABQAJArwACgK8ACEACwAAAAIAAQz7AAIMgQADEGgABABKAAUBjwAGAlcABwAFAAgABQAJArwACgK8ACIACwAAAAIAAQ7LAAIOEQADEfgABABNAAUCVwAGAY8ABwAFAAgABQAJArwACgK8ACMACwAAAAIAARGCAAIQaQADE+wABABQAAUBjwAGAfMABwAFAAgABQAJArwACgK8ACQACwAAAAIAARJfAAIR+QADFRgABABTAAUB8wAGASsABwAFAAgABQAJArwACgK8ACUACwAAAAIAARRkAAIT7QADFkQABABWAAUBKwAGASsABwAFAAgABQAJArwACgK8ACYACwAAAAIAARV8AAIVGQADF3AABABZAAUBKwAGASsABwAFAAgABQAJArwACgK8ACcACwAAAAIAARbOAAIWRQADGJwABABcAAUBKwAGASsABwAFAAgABQAJArwACgK8ACgACwAAAAIAARfMAAIXcQADGWQABABfAAUBKwAGAAAABwAFAAgAAAAJArwACgK8ACkACwAAAAYAAQMOAAIBLAADGWQABAAoAAUAAAAGAAAABwAAAAgAAAAJArwACgK8ACoACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsACsACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsACwACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAC0ACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAC4ACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAC8ACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADAACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADEACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADIACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADMACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADQACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADUACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADYACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADcACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADgACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADkACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADoACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADsACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADwACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAD0ACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAD4ACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAD8ACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAEAACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAEEACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAEIACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAEMACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAEQACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAEUACwAAAAQAAQPoAAIBLAADG1gABABkAAUAAAAGAAAABwAAAAgAAAAJASwACgEsZU8=";
+    private static final String RLS2_POP_VOLUME_110_B64="UkxTMgBFAAABGgAAAUoAAAF6AAABqgAAAdoAAAIKAAACOgAAAmoAAAKaAAACygAAAvoAAAMqAAADWgAAA4oAAAO6AAAD6gAABBoAAARKAAAEegAABKoAAATaAAAFCgAABToAAAVqAAAFmgAABcoAAAX6AAAGKgAABloAAAaKAAAGugAABuoAAAcaAAAHSgAAB3oAAAeqAAAH2gAACAoAAAg6AAAIagAACJoAAAjKAAAI+gAACSoAAAlaAAAJigAACboAAAnqAAAKGgAACkoAAAp6AAAKqgAACtoAAAsKAAALOgAAC2oAAAuaAAALygAAC/oAAAwqAAAMWgAADIoAAAy6AAAM6gAADRoAAA1KAAANegAADaoAAA3aAAEACwAAAAUAAQMOAAIBLAADGWQABAAoAAUAAAAGAAAABwAAAAgAAAAJArwACgK8AAIACwAAAAEAAQMOAAIBLAADA2sABAAoAAUAAAAGAEsABwAAAAgABQAJArwACgK8AAMACwAAAAEAAQNPAAIDIAADA7YABAApAAUASwAGAEoABwAFAAgABQAJArwACgK8AAQACwAAAAEAAQN/AAIDbAADA+gABAAqAAUASgAGADEABwAFAAgABQAJASwACgEsAAUACwAAAAEAAQPOAAIDtwADBEwABAArAAUAMQAGAGMABwAFAAgABQAJArwACgK8AAYACwAAAAMAAQP/AAID6QADBLAABAAsAAUAYwAGAGMABwAFAAgABQAJArwACgK8AAcACwAAAAMAAQRxAAIETQADBRQABAAqAAUAYwAGAGMABwAFAAgABQAJArwACgK8AAgACwAAAAMAAQTTAAIEsQADBaoABAAoAAUAYwAGAJUABwAFAAgABQAJArwACgK8AAkACwAAAAMAAQVqAAIFFQADBkAABAAmAAUAlQAGAJUABwAFAAgABQAJArwACgK8AAoACwAAAAMAAQYSAAIFqwADBzoABAAkAAUAlQAGAJUABwAFAAgABQAJArwACgK8AAsACwAAAAMAAQb3AAIGQQADB9AABAAiAAUAlQAGAJUABwAFAAgABQAJArwACgK8AAwACwAAAAMAAQfWAAIHOwADCMoABAAgAAUAlQAGAPkABwAFAAgABQAJArwACgK8AA0ACwAAAAMAAQiNAAIH0QADCigABAAeAAUA+QAGAV0ABwAFAAgABQAJArwACgK8AA4ACwAAAAMAAQl0AAIIywADCvAABAAcAAUBXQAGAMcABwAFAAgABQAJArwACgK8AA8ACwAAAAMAAQqlAAIKKQADDOQABAAaAAUAxwAGAfMABwAFAAgABQAJArwACgK8ABAACwAAAAMAAQulAAIK8QADDtgABAAYAAUB8wAGAfMABwAFAAgABQAJArwACgK8ABEACwAAAAMAAQ1iAAIM5QADEAQABAAWAAUB8wAGASsABwAFAAgABQAJArwACgK8ABIACwAAAAMAAQ9WAAIO2QADEfgABAAUAAUBKwAGAfMABwAFAAgABQAJArwACgK8ABMACwAAAAMAARB0AAIQBQADFLQABAASAAUB8wAGArsABwAFAAgABQAJArwACgK8ABQACwAAAAMAARKaAAIR+QADFkQABAAQAAUCuwAGAY8ABwAFAAgABQAJArwACgK8ABUACwAAAAMAARUuAAIUtQADGJwABAAOAAUBjwAGAlcABwAFAAgABQAJArwACgK8ABYACwAAAAMAARcBAAIWRQADGWQABAAMAAUCVwAGAAAABwAFAAgAAAAJArwACgK8ABcACwAAAAIAAQQMAAID6QADBOIABAAsAAUAYwAGAJUABwAFAAgABQAJArwACgK8ABgACwAAAAIAAQRbAAIETQADBXgABAAvAAUAlQAGAJUABwAFAAgABQAJArwACgK8ABkACwAAAAIAAQU7AAIE4wADBg4ABAAyAAUAlQAGAJUABwAFAAgABQAJArwACgK8ABoACwAAAAIAAQXSAAIFeQADBtYABAA1AAUAlQAGAMcABwAFAAgABQAJArwACgK8ABsACwAAAAIAAQZvAAIGDwADB9AABAA4AAUAxwAGAPkABwAFAAgABQAJArwACgK8ABwACwAAAAIAAQdpAAIG1wADCMoABAA7AAUA+QAGAPkABwAFAAgABQAJArwACgK8AB0ACwAAAAIAAQg1AAIH0QADCcQABAA+AAUA+QAGAPkABwAFAAgABQAJArwACgK8AB4ACwAAAAIAAQlYAAIIywADCr4ABABBAAUA+QAGAPkABwAFAAgABQAJArwACgK8AB8ACwAAAAIAAQpRAAIJxQADDIAABABEAAUA+QAGAcEABwAFAAgABQAJArwACgK8ACAACwAAAAIAAQtxAAIKvwADDhAABABHAAUBwQAGAY8ABwAFAAgABQAJArwACgK8ACEACwAAAAIAAQz7AAIMgQADEGgABABKAAUBjwAGAlcABwAFAAgABQAJArwACgK8ACIACwAAAAIAAQ7LAAIOEQADEfgABABNAAUCVwAGAY8ABwAFAAgABQAJArwACgK8ACMACwAAAAIAARGCAAIQaQADE+wABABQAAUBjwAGAfMABwAFAAgABQAJArwACgK8ACQACwAAAAIAARJfAAIR+QADFRgABABTAAUB8wAGASsABwAFAAgABQAJArwACgK8ACUACwAAAAIAARRkAAIT7QADFkQABABWAAUBKwAGASsABwAFAAgABQAJArwACgK8ACYACwAAAAIAARV8AAIVGQADF3AABABZAAUBKwAGASsABwAFAAgABQAJArwACgK8ACcACwAAAAIAARbOAAIWRQADGJwABABcAAUBKwAGASsABwAFAAgABQAJArwACgK8ACgACwAAAAIAARfMAAIXcQADGWQABABfAAUBKwAGAAAABwAFAAgAAAAJArwACgK8ACkACwAAAAYAAQMOAAIBLAADGWQABAAoAAUAAAAGAAAABwAAAAgAAAAJArwACgK8ACoACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsACsACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsACwACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAC0ACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAC4ACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAC8ACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADAACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADEACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADIACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADMACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADQACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADUACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADYACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADcACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADgACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADkACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADoACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADsACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsADwACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAD0ACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAD4ACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAD8ACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAEAACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAEEACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAEIACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAEMACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAEQACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsAEUACwAAAAQAAQPoAAIBLAADG1gABABuAAUAAAAGAAAABwAAAAgAAAAJASwACgEsDOU=";
 
     TextView status,current,logView;
-    Button connect,disconnect,read,set3,set4,set5,set7,dumpRules,installAggressive,restoreOriginal;
+    Button connect,disconnect,read,set3,set4,set5,set7,dumpRules,installAggressive,boostVolume,restoreOriginal,restoreRlsOriginal;
     BluetoothAdapter adapter; BluetoothLeScanner scanner; BluetoothGatt gatt;
     BluetoothGattCharacteristic writeChar, notifyChar;
     byte[] rxBuf=new byte[0], key, ctr;
@@ -54,8 +56,10 @@ public class MainActivity extends Activity {
     byte[] writeData;
     int writeOffset=0,writeLastSize=0,writeBlockIndex=0,writeStatusPolls=0;
     final int writeBlockSize=8;
-    boolean writeRestore=false;
-    final byte[] writeTargetFileId=new byte[]{6,(byte)(PKG>>>8),(byte)PKG,(byte)VER};
+    byte[] writeTargetFileId=new byte[]{6,(byte)(PKG>>>8),(byte)PKG,(byte)VER};
+    String writeActionLabel="Transferencia";
+    String writeSuccessUi="TRANSFERENCIA COMPLETA · sonido reactivado";
+    String writeSuccessLog="Transferencia completa";
     final Handler h=new Handler(Looper.getMainLooper());
 
     @Override public void onCreate(Bundle b){ super.onCreate(b); buildUi();
@@ -67,13 +71,31 @@ public class MainActivity extends Activity {
         set5.setOnClickListener(v->sendSet(5));
         set7.setOnClickListener(v->sendSet(7));
         dumpRules.setOnClickListener(v->startDumpBoth());
-        installAggressive.setOnClickListener(v->startWriteRlm(false));
-        restoreOriginal.setOnClickListener(v->startWriteRlm(true));
+        installAggressive.setOnClickListener(v->startWritePayload(
+                RLM2_AGGRESSIVE_V2_B64,6,"RLM2",
+                "Instalando agresivo v2",
+                "AGRESIVO v2 INSTALADO · sonido reactivado",
+                "RLM2 agresivo v2 instalado"));
+        boostVolume.setOnClickListener(v->startWritePayload(
+                RLS2_POP_VOLUME_110_B64,5,"RLS2",
+                "Aplicando boost de volumen de pops",
+                "BOOST VOLUMEN POPS +10% INSTALADO · sonido reactivado",
+                "RLS2 boost volumen pops +10% instalado"));
+        restoreOriginal.setOnClickListener(v->startWritePayload(
+                RLM2_ORIGINAL_B64,6,"RLM2",
+                "Restaurando RLM2 original",
+                "RLM2 ORIGINAL RESTAURADO · sonido reactivado",
+                "RLM2 original restaurado"));
+        restoreRlsOriginal.setOnClickListener(v->startWritePayload(
+                RLS2_ORIGINAL_B64,5,"RLS2",
+                "Restaurando RLS2 original",
+                "RLS2 ORIGINAL RESTAURADO · sonido reactivado",
+                "RLS2 original restaurado"));
     }
 
     void buildUi(){
         LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setPadding(28,28,28,28);
-        TextView title=new TextView(this); title.setText("THOR Backfire Tool v9 · Safe Transfer S63"); title.setTextSize(28); root.addView(title);
+        TextView title=new TextView(this); title.setText("THOR Backfire Tool v10 · Aggressive V2 S63"); title.setTextSize(28); root.addView(title);
         TextView sub=new TextView(this); sub.setText("Herramienta experimental para leer/escribir la regla de pops del THOR. Mantén cerrada la app THOR oficial mientras esté conectada."); sub.setTextSize(16); root.addView(sub);
         status=new TextView(this); status.setText("Sin conectar"); status.setTextSize(18); status.setPadding(0,24,0,8); root.addView(status);
         connect=btn("Conectar al THOR"); root.addView(connect); disconnect=btn("Desconectar"); disconnect.setEnabled(false); root.addView(disconnect);
@@ -94,8 +116,10 @@ public class MainActivity extends Activity {
         root.addView(row2);
         read=btn("Leer valor actual"); read.setEnabled(false); root.addView(read);
         dumpRules=btn("EXTRAER REGLAS S63 (RLS2 + RLM2)"); dumpRules.setEnabled(false); root.addView(dumpRules);
-        installAggressive=btn("INSTALAR PETARDEO AGRESIVO v1"); installAggressive.setEnabled(false); root.addView(installAggressive);
+        installAggressive=btn("INSTALAR AGRESIVO V2 · MUCHOS MÁS POPS"); installAggressive.setEnabled(false); root.addView(installAggressive);
+        boostVolume=btn("BOOST VOLUMEN POPS +10% · EXPERIMENTAL"); boostVolume.setEnabled(false); root.addView(boostVolume);
         restoreOriginal=btn("RESTAURAR RLM2 ORIGINAL"); restoreOriginal.setEnabled(false); root.addView(restoreOriginal);
+        restoreRlsOriginal=btn("RESTAURAR RLS2 ORIGINAL"); restoreRlsOriginal.setEnabled(false); root.addView(restoreRlsOriginal);
         TextView lh=new TextView(this); lh.setText("\nRegistro"); lh.setTextSize(18); root.addView(lh);
         logView=new TextView(this); logView.setTextSize(12); logView.setMovementMethod(new ScrollingMovementMethod());
         ScrollView sv=new ScrollView(this); sv.addView(logView); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
@@ -104,8 +128,8 @@ public class MainActivity extends Activity {
     Button btn(String s){ Button b=new Button(this); b.setText(s); return b; }
     void uiStatus(String s){ runOnUiThread(()->status.setText(s)); }
     void log(String s){ runOnUiThread(()->{ logView.append("["+new java.text.SimpleDateFormat("HH:mm:ss",Locale.getDefault()).format(new Date())+"] "+s+"\n"); }); }
-    void enable(boolean on){ runOnUiThread(()->{connect.setEnabled(!on);disconnect.setEnabled(on);read.setEnabled(on);set3.setEnabled(on);set4.setEnabled(on);set5.setEnabled(on);set7.setEnabled(on);dumpRules.setEnabled(on);installAggressive.setEnabled(on);restoreOriginal.setEnabled(on);}); }
-    void busy(boolean on){ runOnUiThread(()->{read.setEnabled(!on);set3.setEnabled(!on);set4.setEnabled(!on);set5.setEnabled(!on);set7.setEnabled(!on);dumpRules.setEnabled(!on);installAggressive.setEnabled(!on);restoreOriginal.setEnabled(!on);}); }
+    void enable(boolean on){ runOnUiThread(()->{connect.setEnabled(!on);disconnect.setEnabled(on);read.setEnabled(on);set3.setEnabled(on);set4.setEnabled(on);set5.setEnabled(on);set7.setEnabled(on);dumpRules.setEnabled(on);installAggressive.setEnabled(on);boostVolume.setEnabled(on);restoreOriginal.setEnabled(on);restoreRlsOriginal.setEnabled(on);}); }
+    void busy(boolean on){ runOnUiThread(()->{read.setEnabled(!on);set3.setEnabled(!on);set4.setEnabled(!on);set5.setEnabled(!on);set7.setEnabled(!on);dumpRules.setEnabled(!on);installAggressive.setEnabled(!on);boostVolume.setEnabled(!on);restoreOriginal.setEnabled(!on);restoreRlsOriginal.setEnabled(!on);}); }
 
     void ensurePermsAndScan(){
         if(Build.VERSION.SDK_INT>=31){
@@ -300,7 +324,7 @@ public class MainActivity extends Activity {
 
                     if(needStartGroup){
                         step="write_group_start"; waitFor(1,0x0070);
-                        uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · iniciando grupo…");
+                        uiStatus(writeActionLabel+" · iniciando grupo…");
                         sendEncrypted(logical(0x0070,u16(1)));
                     }else if(needStartFile){
                         sendWriteStartFile();
@@ -330,7 +354,7 @@ public class MainActivity extends Activity {
                 case "write_commit_file": {
                     if(writeError(cmd,msg,"commit de archivo"))break;
                     step="write_commit_group"; waitFor(1,0x0074);
-                    uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · confirmando grupo…");
+                    uiStatus(writeActionLabel+" · confirmando grupo…");
                     sendEncrypted(logical(0x0074,new byte[0]));
                     break;
                 }
@@ -367,10 +391,9 @@ public class MainActivity extends Activity {
                     break;
                 }
                 case "reactivate_after_write": {
-                    boolean wasRestore=writeRestore;
                     step="idle"; busy(false);
-                    uiStatus(wasRestore?"ORIGINAL RESTAURADO · sonido reactivado":"AGRESIVO v1 INSTALADO · sonido reactivado");
-                    log(wasRestore?"RLM2 original restaurado":"RLM2 agresivo v1 instalado");
+                    uiStatus(writeSuccessUi);
+                    log(writeSuccessLog);
                     break;
                 }
                 case "set":
@@ -405,32 +428,37 @@ public class MainActivity extends Activity {
     void sendSet(int v){ if(ctr==null)return; try{ int cmd=0x0043;byte[] body=cat(u16(PKG),u16(VER),u16(MODE),u16(1),u16(RULE),u16(v)); pendingSetValue=v;pendingSetRejected=false;pendingSetError=-1;step="set";waitFor(1,cmd);uiStatus("Enviando valor "+v+"…");sendEncrypted(logical(cmd,body)); }catch(Exception e){fail(e);} }
 
     @SuppressWarnings("MissingPermission")
-    void startWriteRlm(boolean restore){
+    void startWritePayload(String b64,int fileType,String expectedMagic,String actionLabel,String successUi,String successLog){
         if(ctr==null){uiStatus("Conecta primero al THOR");return;}
         try{
-            writeRestore=restore;
-            writeData=Base64.decode(restore?RLM2_ORIGINAL_B64:RLM2_AGGRESSIVE_V1_B64,Base64.DEFAULT);
-            if(writeData.length<8 || writeData[0]!='R' || writeData[1]!='L' || writeData[2]!='M' || writeData[3]!='2')throw new Exception("RLM2 embebido inválido");
+            writeData=Base64.decode(b64,Base64.DEFAULT);
+            if(writeData.length<8)throw new Exception(expectedMagic+" embebido demasiado corto");
+            String magic=new String(writeData,0,4,java.nio.charset.StandardCharsets.US_ASCII);
+            if(!expectedMagic.equals(magic))throw new Exception("Magic inválido: "+magic+" (esperado "+expectedMagic+")");
             int got=(writeData[writeData.length-2]&255)|((writeData[writeData.length-1]&255)<<8);
             int calc=crc16(Arrays.copyOf(writeData,writeData.length-2));
-            if(got!=calc)throw new Exception("CRC del RLM2 embebido inválido");
+            if(got!=calc)throw new Exception("CRC del "+expectedMagic+" embebido inválido");
+            writeTargetFileId=new byte[]{(byte)fileType,(byte)(PKG>>>8),(byte)PKG,(byte)VER};
+            writeActionLabel=actionLabel;
+            writeSuccessUi=successUi;
+            writeSuccessLog=successLog;
             if(gatt!=null)gatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH);
             busy(true); writeOffset=0; writeLastSize=0; writeBlockIndex=0; writeStatusPolls=0;
             step="write_status"; waitFor(1,0x0075);
-            uiStatus((restore?"RESTAURANDO ORIGINAL":"INSTALANDO AGRESIVO v1")+" · consultando sesión…");
-            log((restore?"RESTORE":"MOD")+" RLM2 bytes="+writeData.length+" crc=0x"+hx(got)+" blockSize="+writeBlockSize);
+            uiStatus(writeActionLabel+" · consultando sesión…");
+            log("WRITE "+expectedMagic+" fileType="+fileType+" bytes="+writeData.length+" crc=0x"+hx(got)+" blockSize="+writeBlockSize);
             sendEncrypted(logical(0x0075,new byte[0]));
         }catch(Exception e){busy(false);fail(e);step="idle";}
     }
     void sendWriteStartFile() throws Exception {
         step="write_file_start"; waitFor(1,0x0071);
-        uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · preparando archivo…");
+        uiStatus(writeActionLabel+" · preparando archivo…");
         sendEncrypted(logical(0x0071,cat(writeTargetFileId,u32(writeData.length))));
     }
     void sendNextWriteBlockOrCommit() throws Exception {
         if(writeOffset>=writeData.length){
             step="write_commit_file"; waitFor(1,0x0073);
-            uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · confirmando archivo…");
+            uiStatus(writeActionLabel+" · confirmando archivo…");
             sendEncrypted(logical(0x0073,new byte[0]));
         }else{
             sendNextWriteBlock();
@@ -443,7 +471,7 @@ public class MainActivity extends Activity {
         byte[] block=cat(u16(writeBlockIndex),u16(n),chunk);
         writeLastSize=n;
         step="write_block"; waitFor(1,0x0072);
-        uiStatus((writeRestore?"Restaurando original":"Instalando agresivo")+" · "+writeOffset+"/"+writeData.length+" bytes · bloque "+writeBlockIndex);
+        uiStatus(writeActionLabel+" · "+writeOffset+"/"+writeData.length+" bytes · bloque "+writeBlockIndex);
         log("WRITE block="+writeBlockIndex+" len="+n+" offset="+writeOffset);
         sendEncrypted(logical(0x0072,block));
     }
