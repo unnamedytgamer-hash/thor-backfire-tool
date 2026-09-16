@@ -5,16 +5,22 @@ import android.app.Activity;
 import android.bluetooth.*;
 import android.bluetooth.le.*;
 import android.content.pm.PackageManager;
+import android.content.ContentValues;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.os.*;
 import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.widget.*;
 
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.SecureRandom;
 import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -30,7 +36,7 @@ public class MainActivity extends Activity {
     private static final int REQ=1001;
 
     TextView status,current,logView;
-    Button connect,disconnect,read,set3,set4,set5,set7;
+    Button connect,disconnect,read,set3,set4,set5,set7,dumpRules;
     BluetoothAdapter adapter; BluetoothLeScanner scanner; BluetoothGatt gatt;
     BluetoothGattCharacteristic writeChar, notifyChar;
     byte[] rxBuf=new byte[0], key, ctr;
@@ -38,6 +44,10 @@ public class MainActivity extends Activity {
     String step="idle";
     int warmIndex=0, pendingSetValue=-1, pendingSetError=-1;
     boolean pendingSetRejected=false;
+    ByteArrayOutputStream dumpOut;
+    int dumpType=0,dumpSize=0,dumpOffset=0,dumpChunk=200;
+    boolean dumpBoth=false;
+    byte[] dumpedRls,dumpedRlm;
     final Handler h=new Handler(Looper.getMainLooper());
 
     @Override public void onCreate(Bundle b){ super.onCreate(b); buildUi();
@@ -48,11 +58,12 @@ public class MainActivity extends Activity {
         set4.setOnClickListener(v->sendSet(4));
         set5.setOnClickListener(v->sendSet(5));
         set7.setOnClickListener(v->sendSet(7));
+        dumpRules.setOnClickListener(v->startDumpBoth());
     }
 
     void buildUi(){
         LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setPadding(28,28,28,28);
-        TextView title=new TextView(this); title.setText("THOR Backfire Tool v6"); title.setTextSize(28); root.addView(title);
+        TextView title=new TextView(this); title.setText("THOR Backfire Tool v7 · Rule Dumper"); title.setTextSize(28); root.addView(title);
         TextView sub=new TextView(this); sub.setText("Herramienta experimental para leer/escribir la regla de pops del THOR. Mantén cerrada la app THOR oficial mientras esté conectada."); sub.setTextSize(16); root.addView(sub);
         status=new TextView(this); status.setText("Sin conectar"); status.setTextSize(18); status.setPadding(0,24,0,8); root.addView(status);
         connect=btn("Conectar al THOR"); root.addView(connect); disconnect=btn("Desconectar"); disconnect.setEnabled(false); root.addView(disconnect);
@@ -72,6 +83,7 @@ public class MainActivity extends Activity {
         row2.addView(set7,new LinearLayout.LayoutParams(0,-2,1));
         root.addView(row2);
         read=btn("Leer valor actual"); read.setEnabled(false); root.addView(read);
+        dumpRules=btn("EXTRAER REGLAS S63 (RLS2 + RLM2)"); dumpRules.setEnabled(false); root.addView(dumpRules);
         TextView lh=new TextView(this); lh.setText("\nRegistro"); lh.setTextSize(18); root.addView(lh);
         logView=new TextView(this); logView.setTextSize(12); logView.setMovementMethod(new ScrollingMovementMethod());
         ScrollView sv=new ScrollView(this); sv.addView(logView); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
@@ -80,7 +92,7 @@ public class MainActivity extends Activity {
     Button btn(String s){ Button b=new Button(this); b.setText(s); return b; }
     void uiStatus(String s){ runOnUiThread(()->status.setText(s)); }
     void log(String s){ runOnUiThread(()->{ logView.append("["+new java.text.SimpleDateFormat("HH:mm:ss",Locale.getDefault()).format(new Date())+"] "+s+"\n"); }); }
-    void enable(boolean on){ runOnUiThread(()->{connect.setEnabled(!on);disconnect.setEnabled(on);read.setEnabled(on);set3.setEnabled(on);set4.setEnabled(on);set5.setEnabled(on);set7.setEnabled(on);}); }
+    void enable(boolean on){ runOnUiThread(()->{connect.setEnabled(!on);disconnect.setEnabled(on);read.setEnabled(on);set3.setEnabled(on);set4.setEnabled(on);set5.setEnabled(on);set7.setEnabled(on);dumpRules.setEnabled(on);}); }
 
     void ensurePermsAndScan(){
         if(Build.VERSION.SDK_INT>=31){
@@ -169,6 +181,50 @@ public class MainActivity extends Activity {
                     step="idle";
                     break;
                 }
+                case "dump_start": {
+                    if((cmd & 0x8000)!=0){
+                        int ec=(msg!=null && msg.length>=4)?u16at(msg,2):-1;
+                        uiStatus("THOR rechazó extracción tipo "+dumpType+" · 0x"+hx(ec));
+                        log("DUMP start rechazado tipo="+dumpType+" code=0x"+hx(ec));
+                        dumpBoth=false; step="idle"; break;
+                    }
+                    if(msg==null || msg.length<8){ uiStatus("Respuesta de extracción inválida"); step="idle"; dumpBoth=false; break; }
+                    dumpSize=u32at(msg,2);
+                    int accepted=u16at(msg,6);
+                    if(accepted>0) dumpChunk=Math.min(200,accepted); else dumpChunk=200;
+                    dumpOffset=0; dumpOut=new ByteArrayOutputStream(Math.max(0,dumpSize));
+                    log("DUMP tipo="+dumpType+" tamaño="+dumpSize+" bloque="+dumpChunk);
+                    uiStatus("Extrayendo "+(dumpType==5?"RLS2":"RLM2")+" · 0/"+dumpSize+" bytes…");
+                    step="dump_block"; sendDumpBlock(); break;
+                }
+                case "dump_block": {
+                    if((cmd & 0x8000)!=0){
+                        int ec=(msg!=null && msg.length>=4)?u16at(msg,2):-1;
+                        uiStatus("Error leyendo reglas · 0x"+hx(ec)); log("DUMP block error 0x"+hx(ec)); dumpBoth=false; step="idle"; break;
+                    }
+                    if(msg==null || msg.length<4){ uiStatus("Bloque de reglas inválido"); dumpBoth=false; step="idle"; break; }
+                    int n=u16at(msg,2);
+                    if(n<0 || msg.length<4+n){ uiStatus("Longitud de bloque inválida"); dumpBoth=false; step="idle"; break; }
+                    if(n>0) dumpOut.write(msg,4,n);
+                    dumpOffset+=n;
+                    uiStatus("Extrayendo "+(dumpType==5?"RLS2":"RLM2")+" · "+dumpOffset+"/"+dumpSize+" bytes…");
+                    if(n==0 || dumpOffset>=dumpSize){
+                        step="dump_stop"; waitFor(1,0x0082); sendEncrypted(logical(0x0082,new byte[0]));
+                    } else sendDumpBlock();
+                    break;
+                }
+                case "dump_stop": {
+                    if((cmd & 0x8000)!=0){ uiStatus("Error cerrando extracción"); dumpBoth=false; step="idle"; break; }
+                    byte[] data=dumpOut==null?new byte[0]:dumpOut.toByteArray();
+                    saveDumpFile(dumpType,data);
+                    if(dumpType==5 && dumpBoth){ startDump(6); }
+                    else {
+                        dumpBoth=false; step="idle";
+                        if(dumpedRls!=null && dumpedRlm!=null){ saveBundleZip(); uiStatus("EXTRACCIÓN COMPLETA · ZIP guardado en Descargas"); }
+                        else uiStatus("Extracción terminada");
+                    }
+                    break;
+                }
                 case "set":
                     if((cmd & 0x8000)!=0){
                         pendingSetRejected=true;
@@ -200,13 +256,64 @@ public class MainActivity extends Activity {
     void sendReadInternal() throws Exception { int cmd=0x0034;waitFor(1,cmd);sendEncrypted(logical(cmd,cat(u16(PKG),u16(MODE)))); }
     void sendSet(int v){ if(ctr==null)return; try{ int cmd=0x0043;byte[] body=cat(u16(PKG),u16(VER),u16(MODE),u16(1),u16(RULE),u16(v)); pendingSetValue=v;pendingSetRejected=false;pendingSetError=-1;step="set";waitFor(1,cmd);uiStatus("Enviando valor "+v+"…");sendEncrypted(logical(cmd,body)); }catch(Exception e){fail(e);} }
 
+    void startDumpBoth(){
+        if(ctr==null){uiStatus("Conecta primero al THOR");return;}
+        dumpedRls=null; dumpedRlm=null; dumpBoth=true; startDump(5);
+    }
+    void startDump(int type){
+        if(ctr==null)return;
+        try{
+            dumpType=type; dumpSize=0; dumpOffset=0; dumpChunk=200; dumpOut=null;
+            byte[] fileId=new byte[]{(byte)type,(byte)(PKG>>>8),(byte)PKG,(byte)VER};
+            step="dump_start"; waitFor(1,0x0080);
+            uiStatus("Abriendo "+(type==5?"RLS2":"RLM2")+" del S63…");
+            log("DUMP start fileId="+hex(fileId));
+            sendEncrypted(logical(0x0080,cat(fileId,u16(200))));
+        }catch(Exception e){fail(e);dumpBoth=false;step="idle";}
+    }
+    void sendDumpBlock() throws Exception {
+        waitFor(1,0x0081);
+        sendEncrypted(logical(0x0081,u32(dumpOffset)));
+    }
+    void saveDumpFile(int type,byte[] data) throws Exception {
+        String expected=type==5?"RLS2":"RLM2";
+        String magic=data.length>=4?new String(data,0,4,java.nio.charset.StandardCharsets.US_ASCII):"";
+        boolean crcOk=false;
+        if(data.length>=2){int got=(data[data.length-2]&255)|((data[data.length-1]&255)<<8);int calc=crc16(Arrays.copyOf(data,data.length-2));crcOk=got==calc;}
+        String ext=type==5?"smprl":"pkgrl";
+        String name="THOR_S63_"+expected+"_001F_v5."+ext;
+        saveToDownloads(name,data,"application/octet-stream");
+        if(type==5)dumpedRls=data;else dumpedRlm=data;
+        log("Guardado "+name+" bytes="+data.length+" magic="+magic+" crc="+(crcOk?"OK":"NO"));
+        if(!expected.equals(magic)) log("AVISO: magic esperado "+expected+" pero llegó "+magic);
+    }
+    void saveBundleZip() throws Exception {
+        ByteArrayOutputStream bos=new ByteArrayOutputStream();
+        try(ZipOutputStream zos=new ZipOutputStream(bos)){
+            ZipEntry e1=new ZipEntry("THOR_S63_RLS2_001F_v5.smprl");zos.putNextEntry(e1);zos.write(dumpedRls);zos.closeEntry();
+            ZipEntry e2=new ZipEntry("THOR_S63_RLM2_001F_v5.pkgrl");zos.putNextEntry(e2);zos.write(dumpedRlm);zos.closeEntry();
+        }
+        saveToDownloads("THOR_S63_RULES_001F_v5.zip",bos.toByteArray(),"application/zip");
+        log("ZIP guardado: THOR_S63_RULES_001F_v5.zip");
+    }
+    void saveToDownloads(String name,byte[] data,String mime) throws Exception {
+        if(Build.VERSION.SDK_INT<29)throw new Exception("Se requiere Android 10+ para guardar en Descargas");
+        ContentValues cv=new ContentValues();
+        cv.put(MediaStore.MediaColumns.DISPLAY_NAME,name);
+        cv.put(MediaStore.MediaColumns.MIME_TYPE,mime);
+        cv.put(MediaStore.MediaColumns.RELATIVE_PATH,Environment.DIRECTORY_DOWNLOADS);
+        Uri uri=getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI,cv);
+        if(uri==null)throw new Exception("No se pudo crear "+name);
+        try(OutputStream os=getContentResolver().openOutputStream(uri)){if(os==null)throw new Exception("No se pudo abrir "+name);os.write(data);}
+    }
+
     @SuppressWarnings("MissingPermission") void sendRaw(int type,byte[] payload){ try{ byte[] f=frame(type,payload); writeChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE); writeChar.setValue(f); boolean ok=gatt.writeCharacteristic(writeChar); log("TX type="+type+" "+hex(payload)+(ok?"":" [write=false]")); }catch(Exception e){fail(e);} }
     void sendEncrypted(byte[] msg) throws Exception { sendRaw(1,crypt(padded(msg))); }
     byte[] crypt(byte[] data) throws Exception { byte[] iv=Arrays.copyOf(ctr,16); Cipher c=Cipher.getInstance("AES/CTR/NoPadding"); c.init(Cipher.ENCRYPT_MODE,new SecretKeySpec(key,"AES"),new IvParameterSpec(iv)); byte[] out=c.doFinal(data); incCounter(ctr,(data.length+15)/16); return out; }
 
     static byte[] deriveKey(int hw,int fw,int sn){ long x=((long)hw*0x35L+(long)fw*0xf1L+(long)sn*0x0bL)&0xffffffffL; x=(x^((x>>>16)^(x>>>8)^(x>>>24)))&0xffffffffL; int lo8=(int)x&255,lo16=(int)x&65535;int[] c1={0x1a,0xb6,0x8f,0x0d,0xc3,0x5b,0x34,0x82},c2={0xf1,0x11,0x82,0x30,0x5b,0xed,0x4a,0x58};byte[] k=new byte[16];for(int i=0;i<8;i++)k[i]=(byte)((((lo8+c1[i])&255)^c2[i])&255);int[] add={0x27,0x41,0xa9,0x75},xor={0xe4,0,0x22,0,0x6a,0,0x40,0};byte[] vb=new byte[8];for(int j=0;j<4;j++){int z=(lo16+add[j])&65535;vb[j*2]=(byte)z;vb[j*2+1]=(byte)(z>>>8);}for(int i=0;i<8;i++)vb[i]^=(byte)xor[i];k[8]=vb[0];k[9]=vb[2];k[10]=vb[4];k[11]=vb[6];k[12]=(byte)(((x+0x4eL)^0x4cL)&255);k[13]=(byte)((x^0x35L)&255);k[14]=(byte)(((x-0x64L)^0xf4L)&255);k[15]=(byte)(((x+0x68L)^0xe5L)&255);return k;}
     static byte[] padded(byte[] msg){int p=16-((msg.length+1)%16);if(p==0)p=16;byte[] o=new byte[1+msg.length+p];o[0]=(byte)p;System.arraycopy(msg,0,o,1,msg.length);Arrays.fill(o,1+msg.length,o.length,(byte)0xa5);return o;}
-    static byte[] logical(int cmd,byte[] body){return cat(u16(cmd),body);} static byte[] u16(int v){return new byte[]{(byte)(v>>>8),(byte)v};} static int u16at(byte[] a,int i){return ((a[i]&255)<<8)|(a[i+1]&255);} static String hx(int v){return String.format(Locale.ROOT,"%04x",v&0xffff);} static String hex(byte[] a){StringBuilder s=new StringBuilder();for(byte b:a)s.append(String.format(Locale.ROOT,"%02x",b&255));return s.toString();}
+    static byte[] logical(int cmd,byte[] body){return cat(u16(cmd),body);} static byte[] u16(int v){return new byte[]{(byte)(v>>>8),(byte)v};} static int u16at(byte[] a,int i){return ((a[i]&255)<<8)|(a[i+1]&255);} static byte[] u32(int v){return new byte[]{(byte)(v>>>24),(byte)(v>>>16),(byte)(v>>>8),(byte)v};} static int u32at(byte[] a,int i){return ((a[i]&255)<<24)|((a[i+1]&255)<<16)|((a[i+2]&255)<<8)|(a[i+3]&255);} static String hx(int v){return String.format(Locale.ROOT,"%04x",v&0xffff);} static String hex(byte[] a){StringBuilder s=new StringBuilder();for(byte b:a)s.append(String.format(Locale.ROOT,"%02x",b&255));return s.toString();}
     static byte[] cat(byte[]... aa){int n=0;for(byte[] a:aa)n+=a.length;byte[] o=new byte[n];int p=0;for(byte[] a:aa){System.arraycopy(a,0,o,p,a.length);p+=a.length;}return o;}
     static int crc16(byte[] a){int c=0xffff;for(byte bb:a){c^=bb&255;for(int i=0;i<8;i++)c=((c&1)!=0)?((c>>>1)^0xa001):(c>>>1);}return c&0xffff;}
     static byte[] frame(int type,byte[] p){int sw=((type&7)<<13)|(p.length&0x1fff);byte[] pre=cat(new byte[]{(byte)0xa5,0x5a,(byte)(sw>>>8),(byte)sw},p);int c=crc16(pre);return cat(pre,new byte[]{(byte)c,(byte)(c>>>8)});} static void incCounter(byte[] c,int blocks){long x=blocks;for(int i=15;i>=0&&x>0;i--){long s=(c[i]&255L)+(x&255L);c[i]=(byte)s;x=(x>>>8)+(s>>>8);}}
