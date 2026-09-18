@@ -112,8 +112,10 @@ public class MainActivity extends Activity {
     }
 
     void buildUi(){
+        ScrollView page=new ScrollView(this);
+        page.setFillViewport(true);
         LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setPadding(28,28,28,28);
-        TextView title=new TextView(this); title.setText("THOR Backfire Tool v11 · Accel Pops Lab S63"); title.setTextSize(28); root.addView(title);
+        TextView title=new TextView(this); title.setText("THOR Backfire Tool v11.1 · Accel Pops Lab S63"); title.setTextSize(28); root.addView(title);
         TextView sub=new TextView(this); sub.setText("V11 prueba disparo de pops también con acelerador. A/B/C/D son candidatos aislados y reversibles; V2 sigue siendo la base estable. Mantén cerrada la app THOR oficial."); sub.setTextSize(16); root.addView(sub);
         status=new TextView(this); status.setText("Sin conectar"); status.setTextSize(18); status.setPadding(0,24,0,8); root.addView(status);
         connect=btn("Conectar al THOR"); root.addView(connect); disconnect=btn("Desconectar"); disconnect.setEnabled(false); root.addView(disconnect);
@@ -144,8 +146,13 @@ public class MainActivity extends Activity {
         restoreRlsOriginal=btn("RESTAURAR RLS2 ORIGINAL"); restoreRlsOriginal.setEnabled(false); root.addView(restoreRlsOriginal);
         TextView lh=new TextView(this); lh.setText("\nRegistro"); lh.setTextSize(18); root.addView(lh);
         logView=new TextView(this); logView.setTextSize(12); logView.setMovementMethod(new ScrollingMovementMethod());
-        ScrollView sv=new ScrollView(this); sv.addView(logView); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
-        setContentView(root);
+        ScrollView sv=new ScrollView(this); sv.addView(logView);
+        root.addView(sv,new LinearLayout.LayoutParams(
+                -1,(int)(220*getResources().getDisplayMetrics().density)));
+        page.addView(root,new ScrollView.LayoutParams(
+                ScrollView.LayoutParams.MATCH_PARENT,
+                ScrollView.LayoutParams.WRAP_CONTENT));
+        setContentView(page);
     }
     Button btn(String s){ Button b=new Button(this); b.setText(s); return b; }
     void uiStatus(String s){ runOnUiThread(()->status.setText(s)); }
