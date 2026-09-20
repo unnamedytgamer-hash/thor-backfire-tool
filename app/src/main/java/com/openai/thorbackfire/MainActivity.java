@@ -112,9 +112,11 @@ public class MainActivity extends Activity {
     }
 
     void buildUi(){
+        ScrollView page=new ScrollView(this);
+        page.setFillViewport(true);
         LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setPadding(28,28,28,28);
-        TextView title=new TextView(this); title.setText("THOR Backfire Tool v12 · Gate Test S63"); title.setTextSize(28); root.addView(title);
-        TextView sub=new TextView(this); sub.setText("V12 añade GATE TEST sobre Aggressive V2 para probar la condición de activación del backfire. Mantén cerrada la app THOR oficial."); sub.setTextSize(16); root.addView(sub);
+        TextView title=new TextView(this); title.setText("THOR Backfire Tool v12.1 · Gate Test S63"); title.setTextSize(28); root.addView(title);
+        TextView sub=new TextView(this); sub.setText("V12.1 corrige el desplazamiento vertical. GATE TEST mantiene exactamente los mismos parámetros de V12 sobre Aggressive V2. Mantén cerrada la app THOR oficial."); sub.setTextSize(16); root.addView(sub);
         status=new TextView(this); status.setText("Sin conectar"); status.setTextSize(18); status.setPadding(0,24,0,8); root.addView(status);
         connect=btn("Conectar al THOR"); root.addView(connect); disconnect=btn("Desconectar"); disconnect.setEnabled(false); root.addView(disconnect);
         TextView preset=new TextView(this); preset.setText("\nPreset: packageId=0x001F · versionId=0x0005 · modeTypeId=0x0003 · regla=0x0021"); preset.setTextSize(15); root.addView(preset);
@@ -144,8 +146,13 @@ public class MainActivity extends Activity {
         restoreRlsOriginal=btn("RESTAURAR RLS2 ORIGINAL"); restoreRlsOriginal.setEnabled(false); root.addView(restoreRlsOriginal);
         TextView lh=new TextView(this); lh.setText("\nRegistro"); lh.setTextSize(18); root.addView(lh);
         logView=new TextView(this); logView.setTextSize(12); logView.setMovementMethod(new ScrollingMovementMethod());
-        ScrollView sv=new ScrollView(this); sv.addView(logView); root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
-        setContentView(root);
+        ScrollView sv=new ScrollView(this); sv.addView(logView);
+        root.addView(sv,new LinearLayout.LayoutParams(
+                -1,(int)(220*getResources().getDisplayMetrics().density)));
+        page.addView(root,new ScrollView.LayoutParams(
+                ScrollView.LayoutParams.MATCH_PARENT,
+                ScrollView.LayoutParams.WRAP_CONTENT));
+        setContentView(page);
     }
     Button btn(String s){ Button b=new Button(this); b.setText(s); return b; }
     void uiStatus(String s){ runOnUiThread(()->status.setText(s)); }
